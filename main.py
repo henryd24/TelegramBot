@@ -1,23 +1,29 @@
-from tkinter import N
-from pip import main
 import telebot
 import os
-
-def init_telegram():
-    global bot
-    TOKEN = os.environ['TOKEN']
-    bot = telebot.TeleBot(TOKEN, parse_mode=None)
+import gettrm
+TOKEN = os.environ['TOKEN']
+bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-	bot.reply_to(message, "Que se dice jijueputas, a ver que quieren ver?")
+	bot.reply_to(message, "Que se dice jijueputas")
 
 @bot.message_handler(commands=['trm'])
 def trm(message):
-	bot.reply_to(message, "Que se dice jijueputas, a ver que quieren ver?")
+    data = gettrm.parse_book()
+    msg = ''
+    for trm in reversed(data):
+        txt = """Conversion: {stock_name}
+Valor Actual: {current_price}
+Cierre Anterior: {previous_closing}
+-------------------\n""".format(stock_name=trm['stock_name'],
+                                                      current_price=trm['current_price'],
+                                                      previous_closing=trm['previous_closing'])
+        msg = txt+msg
+    bot.reply_to(message, msg)
 
 def main():
-    init_telegram()
+    bot.infinity_polling()
     
 if __name__ == "__main__":
     main()
