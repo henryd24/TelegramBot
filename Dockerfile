@@ -1,10 +1,9 @@
-FROM python:3.7.14-alpine3.16
+FROM python:3.7
 
 WORKDIR /usr/src/app
-
 COPY requirements.txt ./
+RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
-
+RUN mkdir /tmp/telegrambot
 CMD [ "python", "./main.py" ]
