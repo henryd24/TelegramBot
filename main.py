@@ -10,25 +10,16 @@ def send_welcome(message):
 
 @bot.message_handler(commands=['trm'])
 def trm(message):
-    data = getdata.parse_book()
-    msg = ''
-    for trm in reversed(data):
-        txt = """Conversion: {stock_name}
-Valor Actual: {current_price}
-Cierre Anterior: {previous_closing}
--------------------\n""".format(stock_name=trm['stock_name'],
-                                current_price=trm['current_price'],
-                                previous_closing=trm['previous_closing'])
-        msg = txt+msg
+    msg = getdata.parse_book()
     bot.reply_to(message, msg)
 
 
 @bot.message_handler(commands=['upgames'])
 def upcoming_releases(message):
     getdata.upcoming_releases()
-    with open('/tmp/telegrambot/juegos.csv','rb') as file:
-        doc = file.read()
-        bot.send_document(message.chat.id,doc)
+    doc = open('/tmp/telegrambot/juegos.csv','rb')
+    bot.send_document(message.chat.id,doc)
+    doc.close()
 
 def main():
     bot.infinity_polling()
