@@ -1,3 +1,4 @@
+from operator import index
 import telebot
 import os
 import getdata
@@ -6,7 +7,7 @@ bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-	bot.reply_to(message, "Que se dice jijueputas")
+	bot.reply_to(message, "Que se dice Caguaneros")
 
 @bot.message_handler(commands=['trm'])
 def trm(message):
@@ -16,13 +17,18 @@ def trm(message):
 
 @bot.message_handler(commands=['upgames'])
 def upcoming_releases(message):
-    getdata.upcoming_releases()
-    doc = open('/tmp/telegrambot/juegos.csv','rb')
-    bot.send_document(message.chat.id,doc)
-    doc.close()
+    table = getdata.upcoming_releases()
+    bot.reply_to(message, table)
 
 def main():
-    bot.infinity_polling()
+    try:
+        print('Iniciando Bot')
+        print('--------------------------------')
+        bot.infinity_polling()
+    except:
+        print('Finalizando Bot')
+        print('--------------------------------')
+        
     
 if __name__ == "__main__":
     main()

@@ -1,14 +1,16 @@
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
+from  tabulate import tabulate
 
-bse_list = ['quote/USD-COP', 'quote/EUR-COP']
+
+bse_list = ['quote/USD-COP', 'quote/EUR-COP','quote/BTC-USD']
 start_url = 'https://google.com/finance/'
 gamesurl = 'https://vandal.elespanol.com/lanzamientos/97/xbox-series-x'
 
 def parse_book():
     msg = ''
-    for path in bse_list:
+    for path in reversed(bse_list):
         response = requests.get(start_url+path)
         html = BeautifulSoup(response.text,'html.parser')
         stock_name = html.find(class_='zzDege').text.strip()
@@ -27,5 +29,5 @@ def upcoming_releases():
     html = requests.get(gamesurl).content
     df_list = pd.read_html(html)
     df = df_list[-1]
-    df = df[['Fecha', 'Juego', 'Plat.']]
-    df.to_csv('/tmp/telegrambot/juegos.csv',index=False)
+    df = df[['Fecha', 'Juego']]
+    return tabulate(df, headers='keys', showindex=False)
