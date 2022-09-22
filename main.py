@@ -2,6 +2,10 @@ from operator import index
 import telebot
 import os
 import getdata
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+
 TOKEN = os.environ['TOKEN']
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
@@ -11,23 +15,32 @@ def send_welcome(message):
 
 @bot.message_handler(commands=['trm'])
 def trm(message):
-    msg = getdata.parse_book()
-    bot.reply_to(message, msg)
+    try:
+        logging.info('Getting TRM from Google')
+        msg = getdata.parse_book()
+        bot.reply_to(message, msg)
+        logging.info('Sending TRM')
+    except Exception as e:
+        logging.error("Exception ocurred", exc_info=True)
 
 
 @bot.message_handler(commands=['upgames'])
 def upcoming_releases(message):
-    table = getdata.upcoming_releases()
-    bot.reply_to(message, table)
-
+    try:
+        logging.info('Getting games')
+        table = getdata.upcoming_releases()
+        bot.reply_to(message, table)
+        logging.info('Sending games')
+    except Exception as e:
+        logging.error("Exception ocurred", exc_info=True)
 def main():
     try:
-        print('Iniciando Bot')
-        print('--------------------------------')
+        logging.info('Iniciando Bot')
+        logging.info('--------------------------------')
         bot.infinity_polling()
     except:
-        print('Finalizando Bot')
-        print('--------------------------------')
+        logging.info('Finalizando Bot')
+        logging.info('--------------------------------')
         
     
 if __name__ == "__main__":
