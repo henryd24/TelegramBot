@@ -4,7 +4,7 @@ import pandas as pd
 from  tabulate import tabulate
 
 
-bse_list = ['quote/USD-COP', 'quote/EUR-COP','quote/BTC-USD']
+bse_list = ['quote/USD-COP', 'quote/EUR-COP']
 start_url = 'https://google.com/finance/'
 gamesurl = 'https://vandal.elespanol.com/lanzamientos/97/xbox-series-x'
 
