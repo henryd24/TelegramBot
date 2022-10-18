@@ -2,7 +2,7 @@ import telebot
 import os
 import getdata
 import logging
-import uuid,instaloader
+import instaloader
 
 TOKEN = os.environ['TOKEN']
 INSTA_USER = os.environ['INSTA_USER']

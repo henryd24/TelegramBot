@@ -1,8 +1,7 @@
 from bs4 import BeautifulSoup
-import requests,re,instaloader, io
+import requests,re,instaloader
 import pandas as pd
 from  tabulate import tabulate
-from PIL import Image
 
 bse_list = ['quote/USD-COP', 'quote/EUR-COP']
 start_url = 'https://google.com/finance/'
@@ -35,8 +34,6 @@ def upcoming_releases():
 def instagram(message,L):
     regex_code = re.search("https:\/\/www\.instagram\.com\/(p|reel)\/(.*)\/.*", message)
     code = regex_code.group(2)
-    #L = instaloader.Instaloader()
-    #L.login('danielvictor1243', "Danielmejor24")
     post = instaloader.Post.from_shortcode(L.context,code)
     photo_url = post.url
     video_url = post.video_url
