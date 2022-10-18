@@ -1,0 +1,9 @@
+version: "3"
+services:
+  telegrambot:
+    container_name: telegrambot
+    build: .
+    # SET TOKEN,INSTA_PASS,INSTA_USER ENV
+    env_file:
+      - .env
+    restart: unless-stopped
