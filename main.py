@@ -45,14 +45,17 @@ def instagram(message):
     try:
         logging.info('Getting Image/Video from Instagram')
         splitting = message.text.split('/instagram ')
-        data,video_check = getdata.instagram(splitting[1],L)
-        if video_check is not None:
-            bot.send_video_note(chat_id=message.chat.id,
-                           data=video_check,reply_to_message_id=message.message_id)
+        if len(splitting) == 2:
+            data,video_check = getdata.instagram(splitting[1],L)
+            if video_check is not None:
+                bot.send_video_note(chat_id=message.chat.id,
+                            data=video_check,reply_to_message_id=message.message_id)
+            else:
+                bot.send_photo(chat_id=message.chat.id,
+                            photo=data,reply_to_message_id=message.message_id)
+            logging.info('Sending Image/Video')
         else:
-            bot.send_photo(chat_id=message.chat.id,
-                           photo=data,reply_to_message_id=message.message_id)
-        logging.info('Sending Image/Video')
+            bot.reply_to(message, "Not Instagram URL")
     except Exception as e:
         logging.error("Exception ocurred", exc_info=True)
 
