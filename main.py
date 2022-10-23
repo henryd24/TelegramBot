@@ -55,7 +55,7 @@ def instagram(message):
         else:
             bot.reply_to(message, "Not Instagram URL")
     except Exception as e:
-        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB ); If not, try again ")
+        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB or bad url ); If not, try again ")
         logging.error("Exception ocurred", exc_info=True)
 
 
@@ -70,7 +70,7 @@ def facebook(message):
                         video=data,reply_to_message_id=message.message_id)
             logging.info('Sending Image/Video')
     except Exception as e:
-        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB ); If not, try again ")
+        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB or bad url ); If not, try again ")
         logging.error("Exception ocurred", exc_info=True)
 
 def main():
