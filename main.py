@@ -28,8 +28,6 @@ def trm(message):
     except Exception as e:
         logging.error("Exception ocurred", exc_info=True)
 
-
-
 @bot.message_handler(commands=['upgames'])
 def upcoming_releases(message):
     try:
@@ -40,16 +38,16 @@ def upcoming_releases(message):
     except Exception as e:
         logging.error("Exception ocurred", exc_info=True)
         
-@bot.message_handler(commands=['instagram'])
+@bot.message_handler(commands=['ig'])
 def instagram(message):
     try:
         logging.info('Getting Image/Video from Instagram')
-        splitting = message.text.split('/instagram ')
+        splitting = message.text.split('/ig ')
         if len(splitting) == 2:
             data,video_check = getdata.instagram(splitting[1],L)
             if video_check is not None:
-                bot.send_video_note(chat_id=message.chat.id,
-                            data=video_check,reply_to_message_id=message.message_id)
+                bot.send_video(chat_id=message.chat.id,
+                            video=video_check,reply_to_message_id=message.message_id)
             else:
                 bot.send_photo(chat_id=message.chat.id,
                             photo=data,reply_to_message_id=message.message_id)
@@ -57,8 +55,23 @@ def instagram(message):
         else:
             bot.reply_to(message, "Not Instagram URL")
     except Exception as e:
+        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB ); If not, try again ")
         logging.error("Exception ocurred", exc_info=True)
 
+
+@bot.message_handler(commands=['fb1'])
+def facebook(message):
+    try:
+        logging.info('Getting Image/Video from Facebook')
+        splitting = message.text.split('/fb1 ')
+        if len(splitting) == 2:
+            data = getdata.facebook(splitting[1])
+            bot.send_video(chat_id=message.chat.id,
+                        video=data,reply_to_message_id=message.message_id)
+            logging.info('Sending Image/Video')
+    except Exception as e:
+        bot.reply_to(message, "Video could not be sent (probably too large > 20 MB ); If not, try again ")
+        logging.error("Exception ocurred", exc_info=True)
 
 def main():
     try:
@@ -69,6 +82,5 @@ def main():
         logging.info('Finalizando Bot')
         logging.info('--------------------------------')
         
-    
 if __name__ == "__main__":
     main()

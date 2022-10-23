@@ -1,5 +1,5 @@
 from bs4 import BeautifulSoup
-import requests,re,instaloader
+import logging,requests,re,instaloader,youtube_dl
 import pandas as pd
 from  tabulate import tabulate
 
@@ -32,10 +32,50 @@ def upcoming_releases():
     return tabulate(df, headers='keys', showindex=False)
 
 def instagram(message,L):
-    regex_code = re.search("https:\/\/www\.instagram\.com\/(p|reel)\/(.*)\/.*", message)
-    code = regex_code.group(2)
-    post = instaloader.Post.from_shortcode(L.context,code)
-    photo_url = post.url
-    video_url = post.video_url
-    data = requests.get(photo_url).content
-    return data,video_url
+    if 'https://www.instagram.com/stories' in message:
+        regex_code = re.search("https:\/\/www\.instagram\.com\/(stories)\/.*\/(\d+)", message)
+        code = int(regex_code.group(2))
+        post = instaloader.StoryItem.from_mediaid(L.context,code)
+        photo_url = post.url
+        video_url = post.video_url
+        return photo_url,video_url
+    else:
+        regex_code = re.search("https:\/\/www\.instagram\.com\/(p|reel)\/(\w*)", message)
+        code = regex_code.group(2)
+        post = instaloader.Post.from_shortcode(L.context,code)
+        photo_url = post.url
+        video_url = post.video_url
+        data = requests.get(photo_url).content
+        return data,video_url
+
+def facebook(url):
+    try:
+        secondCheck = False
+        if 'https://m' in url:
+            url = url.replace('https://m','https://www')
+            secondCheck=True
+        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        with ydl:
+            result = ydl.extract_info(
+            url,
+            download=False # We just want to extract the info
+        )
+        if 'entries' in result:
+        # Can be a playlist or a list of videos
+            video = result['entries'][0]
+        else:
+        # Just a video
+            video = result
+        if 'url' not in video:
+        # If video is large
+            video = video['formats'][5]
+        
+        video_url = video['url']
+        
+        if secondCheck:
+            video_url = facebook(video_url)
+            
+        return video_url
+    
+    except Exception as e:
+        logging.error("Exception ocurred getting url", exc_info=True)
