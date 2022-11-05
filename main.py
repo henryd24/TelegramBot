@@ -1,15 +1,15 @@
 import telebot,os,instaloader,logging
 from src import *
 #================================Init Config=====================================================
-if os.environ['TOKEN'] is not None:
-    TOKEN = os.environ['TOKEN']
+if os.environ.get('TOKEN') is not None:
+    TOKEN = os.environ.get('TOKEN')
 else:
     print("Env variable TOKEN doesn't exist")
     raise SystemError
 
-if os.environ['INSTA_USER'] is not None and os.environ['INSTA_PASS'] is not None:
-    INSTA_USER = os.environ['INSTA_USER']
-    INSTA_PASS = os.environ['INSTA_PASS']
+if os.environ.get('INSTA_USER') is not None and os.environ.get('INSTA_PASS') is not None:
+    INSTA_USER = os.environ.get('INSTA_USER')
+    INSTA_PASS = os.environ.get('INSTA_PASS')
     L = instaloader.Instaloader()
     L.login(INSTA_USER, INSTA_PASS)
 else:
