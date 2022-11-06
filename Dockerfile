@@ -7,5 +7,4 @@ RUN pip install --upgrade pip
 RUN pip install lxml
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-RUN mkdir /tmp/telegrambot
 ENTRYPOINT [ "python","./main.py"]
