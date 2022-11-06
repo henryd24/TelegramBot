@@ -1,17 +1,29 @@
-import telebot,os,instaloader,logging
+import argparse
+import telebot,instaloader,logging
 from src import *
+
+parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
+parser.add_argument('-t','--token', help='Token to connect in telegram', required=True)
+parser.add_argument('-f','--file', help='If set a session file', required=False)
+parser.add_argument('-u','--user', help='Instagram user', required=False)
+parser.add_argument('-p','--password', help='Instagram password', required=False)
+args = vars(parser.parse_args())
+
 #================================Init Config=====================================================
-if os.environ.get('TOKEN') is not None:
-    TOKEN = os.environ.get('TOKEN')
+if args['token'] is not None:
+    TOKEN = args['token']
 else:
     print("Env variable TOKEN doesn't exist")
     raise SystemError
 
-if os.environ.get('INSTA_USER') is not None and os.environ.get('INSTA_PASS') is not None:
-    INSTA_USER = os.environ.get('INSTA_USER')
-    INSTA_PASS = os.environ.get('INSTA_PASS')
+if args['user'] is not None and args['password'] is not None:
+    INSTA_USER = args['user']
+    INSTA_PASS = args['password']
     L = instaloader.Instaloader()
     L.login(INSTA_USER, INSTA_PASS)
+elif args['file'] is not None and args['user'] is not None:
+    L = instaloader.Instaloader()
+    L.load_session_from_file(username=args['user'],filename=args['file'])
 else:
     L = instaloader.Instaloader()
 
