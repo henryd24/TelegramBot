@@ -16,16 +16,13 @@ else:
     print("Env variable TOKEN doesn't exist")
     raise SystemError
 
+L = instaloader.Instaloader(max_connection_attempts = 5)
 if args['user'] is not None and args['password'] is not None:
     INSTA_USER = args['user']
     INSTA_PASS = args['password']
-    L = instaloader.Instaloader()
     L.login(INSTA_USER, INSTA_PASS)
 elif args['file'] is not None and args['user'] is not None:
-    L = instaloader.Instaloader()
     L.load_session_from_file(username=args['user'],filename=args['file'])
-else:
-    L = instaloader.Instaloader()
 
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 logging.basicConfig(level=logging.DEBUG)
