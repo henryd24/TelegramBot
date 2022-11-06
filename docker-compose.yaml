@@ -3,7 +3,8 @@ services:
   telegrambot:
     container_name: telegrambot
     build: .
-    # SET TOKEN,INSTA_PASS,INSTA_USER ENV
+    # SET TOKEN,INSTA_PASS,INSTA_USER,SESSION_FILE ENV
     env_file:
       - .env
+    command: --token $TOKEN --file=$SESSION_FILE --user $INSTA_USER
     restart: unless-stopped
