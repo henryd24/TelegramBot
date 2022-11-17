@@ -6,7 +6,8 @@ def get_imgvid_facebook(url):
         if 'https://m' in url:
             url = url.replace('https://m','https://www')
             secondCheck=True
-        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s'})
+        ydl = youtube_dl.YoutubeDL({'outtmpl': '%(id)s.%(ext)s','format' : 'bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best', 
+                                    'merge-output-format' : 'mp4','postprocessors': [{'key': 'FFmpegVideoConvertor','preferedformat': 'mp4'}]})
         with ydl:
             result = ydl.extract_info(
             url,
@@ -20,8 +21,8 @@ def get_imgvid_facebook(url):
             video = result
         if 'url' not in video:
         # If video is large
-            video = video['formats'][5]
-        
+            video = [values for values in video['formats'] if values['format_id'] == 'hd'][0]
+            
         video_url = video['url']
         
         if secondCheck:

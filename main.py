@@ -56,7 +56,7 @@ def upcoming_releases(message):
 def instagram(message):
     try:
         logging.info('Getting Image/Video from Instagram')
-        splitting = message.text.split('/ig ')
+        splitting = message.text.split(' ')
         if len(splitting) == 2:
             data,video_check = get_imgvid_instagram(splitting[1],L)
             if video_check is not None:
@@ -77,14 +77,30 @@ def instagram(message):
 def facebook(message):
     try:
         logging.info('Getting Image/Video from Facebook')
-        splitting = message.text.split('/fb ')
+        splitting = message.text.split(' ')
         if len(splitting) == 2:
             data = get_imgvid_facebook(splitting[1])
+            print(data)
             bot.send_video(chat_id=message.chat.id,
                         video=data,reply_to_message_id=message.message_id)
             logging.info('Sending Image/Video')
     except Exception as e:
         bot.reply_to(message, "Video could not be sent (probably too large > 20 MB or bad url ); If not, try again ")
+        logging.error("Exception ocurred", exc_info=True)
+
+
+@bot.message_handler(commands=['matches','tmatches'])
+def sending_matches(message):
+    try:
+        logging.info('Getting Matches')
+        if '/matches' in message.text:
+            data = matches()
+            bot.send_message(chat_id=message.chat.id,text=f'<pre>{data}</pre>',parse_mode="HTML")
+        elif '/tmatches' in message.text:
+            data = matches(d=1)
+            bot.send_message(chat_id=message.chat.id,text=f'<pre>{data}</pre>',parse_mode="HTML")
+    except Exception as e:
+        bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
 
 def main():
@@ -97,4 +113,4 @@ def main():
         logging.info('--------------------------------')
         
 if __name__ == "__main__":
-    main()
+    main()  
