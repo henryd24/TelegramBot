@@ -13,7 +13,7 @@ args = vars(parser.parse_args())
 if args['token'] is not None:
     TOKEN = args['token']
 else:
-    print("Env variable TOKEN doesn't exist")
+    print("Please set TOKEN parameter")
     raise SystemError
 
 L = instaloader.Instaloader(max_connection_attempts = 5)

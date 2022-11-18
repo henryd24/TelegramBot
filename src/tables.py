@@ -24,5 +24,4 @@ def matches(d=None):
     matches['Hora'] = hour
     matches['Canal'] =  matches['Hora/Canal'].str.replace('^.*\| ','',regex=True)
     matches = matches[['Equipos','Hora','Canal']]
-    #return tabulate(matches, headers='keys', tablefmt="github")
     return tabulate(matches,headers='keys', tablefmt="github",showindex=False)

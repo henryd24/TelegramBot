@@ -1,5 +1,4 @@
 import logging,youtube_dl
-
 def get_imgvid_facebook(url):
     try:
         secondCheck = False
@@ -22,13 +21,9 @@ def get_imgvid_facebook(url):
         if 'url' not in video:
         # If video is large
             video = [values for values in video['formats'] if values['format_id'] == 'hd'][0]
-            
         video_url = video['url']
-        
         if secondCheck:
             video_url = get_imgvid_facebook(video_url)
-            
         return video_url
-    
     except Exception as e:
         logging.error("Exception ocurred getting url", exc_info=True)
