@@ -23,5 +23,6 @@ def matches(d=None):
         hour.append(re.search(r"^\d+:\d+\s[am|pm]+",values).group())
     matches['Hora'] = hour
     matches['Canal'] =  matches['Hora/Canal'].str.replace('^.*\| ','',regex=True)
-    matches = matches[['Equipos','Hora','Canal']]
+    matches[['Competición','Canal']] = matches['Canal'].str.split('-',expand=True)
+    matches = matches[['Equipos','Hora','Competición','Canal']]
     return tabulate(matches,headers='keys', tablefmt="github",showindex=False)
