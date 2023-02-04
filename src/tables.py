@@ -28,13 +28,13 @@ def matches(d=None):
     matches['Canal'] =  matches['Hora/Canal'].str.replace('^.*\| ','',regex=True)
     matches[['Competición','Canal']] = matches['Canal'].str.split('-',1,expand=True)
     matches = matches[['Equipos','Hora','Competición','Canal']]
-    fig,_ = render_mpl_table(matches, header_columns=0, col_width=7.0)
+    fig,_ = render_mpl_table(matches, header_columns=0, col_width=9.0)
     plot_file = BytesIO()
     fig.savefig(plot_file,format='png',bbox_inches='tight')
     plot_file.seek(0)
     return plot_file
 
-def render_mpl_table(data, col_width=5.0, row_height=1.0, font_size=14,
+def render_mpl_table(data, col_width=5.0, row_height=1.0, font_size=18,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='w',
                      bbox=[0, 0, 1, 1], header_columns=0,
                      ax=None, **kwargs):
