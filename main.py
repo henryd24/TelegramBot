@@ -95,12 +95,14 @@ def sending_matches(message):
         logging.info('Getting Matches')
         if '/matches' in message.text:
             data = matches()
-            bot.send_photo(chat_id=message.chat.id,
-                            photo=data,reply_to_message_id=message.message_id)
+            data.name = "todayMatches.png"
+            bot.send_document(chat_id=message.chat.id,
+                            document=data ,reply_to_message_id=message.message_id)
         elif '/tmatches' in message.text:
             data = matches(d=1)
-            bot.send_photo(chat_id=message.chat.id,
-                            photo=data,reply_to_message_id=message.message_id)
+            data.name = "tomorrowMatches.png"
+            bot.send_document(chat_id=message.chat.id,
+                            document=data ,reply_to_message_id=message.message_id)
     except Exception as e:
         bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
