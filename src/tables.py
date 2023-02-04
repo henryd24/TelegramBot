@@ -30,7 +30,7 @@ def matches(d=None):
     matches = matches[['Equipos','Hora','Competición','Canal']]
     fig,_ = render_mpl_table(matches, header_columns=0, col_width=7.0)
     plot_file = BytesIO()
-    fig.savefig(plot_file,format='png')
+    fig.savefig(plot_file,format='png',bbox_inches='tight')
     plot_file.seek(0)
     return plot_file
 
