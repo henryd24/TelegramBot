@@ -6,5 +6,5 @@ services:
     # SET TOKEN,INSTA_PASS,INSTA_USER,SESSION_FILE ENV
     env_file:
       - .env
-    command: --token $TOKEN --file=$SESSION_FILE --user $INSTA_USER
+    command: --token $TOKEN
     restart: unless-stopped
