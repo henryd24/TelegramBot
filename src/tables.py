@@ -19,7 +19,7 @@ def matches(d=None):
     position = 0
     if d != None:
         position = 1
-    matches=pd.read_html(bytes(html.text.replace("<br>"," | "),encoding='utf-8'))[position]
+    matches=pd.read_html(bytes(html.text.replace("<br/>"," | "),encoding='utf-8'))[position]
     matches['Equipos'].replace("\|","vs",regex=True,inplace=True)
     hour = []
     for values in matches['Hora/Canal']:
