@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 
-bse_list = ['quote/USD-COP', 'quote/EUR-COP']
+bse_list = ['quote/USD-COP']
 start_url = 'https://google.com/finance/'
 
 def google_trm():
