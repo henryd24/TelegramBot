@@ -59,6 +59,24 @@ def sending_matches(message):
         bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
 
+@bot.message_handler(commands=['random'])
+def random_number(message):
+    try:
+        logging.info('Se solicitó un número aleatorio')
+        repetitions = 100
+        args = message.text.split()[1:]
+        if len(args) != 2:
+            bot.reply_to(message, "Por favor, envía el comando en el formato: /random start end")
+            return
+        start, end = map(int, args)
+        number, count = most_common_number(start, end, repetitions=repetitions)
+        msg = f"El número que más se repitió (de {repetitions} repeticiones) entre {start} y {end} fue {number}, repitiéndose {count} veces."
+        bot.reply_to(message, msg)
+        logging.info('Número enviado con éxito')
+    except Exception as e:
+        logging.error("Ocurrió una excepción", exc_info=True)
+        bot.reply_to(message, "Ocurrió un error. Inténtalo de nuevo.")
+
 def main():
     try:
         logging.info('Iniciando Bot')

@@ -19,14 +19,19 @@ def matches(d=None):
     position = 0
     if d != None:
         position = 1
-    matches=pd.read_html(bytes(html.text.replace("<br/>"," | "),encoding='utf-8'))[position]
+    cleaned_html = re.sub(r'<br\s*/?>', ' | ', html.text)
+    matches = pd.read_html(bytes(cleaned_html, encoding='utf-8'))[position]
     matches['Equipos'].replace("\|","vs",regex=True,inplace=True)
     hour = []
     for values in matches['Hora/Canal']:
         hour.append(re.search(r"^\d+:\d+\s[am|pm]+",values).group())
     matches['Hora'] = hour
     matches['Canal'] =  matches['Hora/Canal'].str.replace('^.*\| ','',regex=True)
-    matches[['Competición','Canal']] = matches['Canal'].str.split('-',1,expand=True)
+    df_split = matches['Canal'].str.rsplit('-', n=1, expand=True)
+    if df_split.shape[1] > 2:
+        df_split[0] = df_split.iloc[:, :-1].apply(lambda x: '-'.join(x.dropna()), axis=1)
+        df_split = df_split.iloc[:, [-2, -1]]
+    matches[['Competición', 'Canal']] = df_split
     matches = matches[['Equipos','Hora','Competición','Canal']]
     fig,_ = render_mpl_table(matches, header_columns=0, col_width=9.0)
     plot_file = BytesIO()
