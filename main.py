@@ -70,7 +70,7 @@ def random_number(message):
             return
         start, end = map(int, args)
         number, count = most_common_number(start, end, repetitions=repetitions)
-        msg = f"El número que más se repitió (de {repetitions} repeticiones) entre {start} y {end} fue {number}, repitiéndose {count} veces."
+        msg = f"Número: {number}\nRepeticiones: {count}."
         bot.reply_to(message, msg)
         logging.info('Número enviado con éxito')
     except Exception as e:
