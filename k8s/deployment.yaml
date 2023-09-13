@@ -31,4 +31,10 @@ spec:
               name: telegrambot
         command: ["python", "./main.py"]
         args: ["--token", "$(TOKEN)"]
-            
+        volumeMounts:
+          - name:  tz-config
+            mountPath:  /etc/localtime
+      volumes:
+      - name: tz-config
+        hostPath:
+          path: /etc/localtime
