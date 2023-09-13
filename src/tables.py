@@ -14,7 +14,7 @@ def xbox_games():
     df = df[['Fecha', 'Juego']]
     return tabulate(df, headers='keys', showindex=False)
 
-def matches(position=1):
+def matches(position=0):
     matches = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
     html = requests.get(matches)
     cleaned_html = re.sub(r'<br\s*/?>', ' | ', html.text)
@@ -31,7 +31,7 @@ def matches(position=1):
         df_split = df_split.iloc[:, [-2, -1]]
     matches[['Competición', 'Canal']] = df_split
     matches = matches[['Equipos','Hora','Competición','Canal']]
-    if position==1:
+    if position==0:
         current_hour_less_2 = (datetime.now() - timedelta(hours=2)).time()
         matches = matches[pd.to_datetime(matches['Hora'], format='%I:%M %p').dt.time > current_hour_less_2]
     fig,_ = render_mpl_table(matches, header_columns=0, col_width=9.0)
