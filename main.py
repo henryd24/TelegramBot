@@ -51,7 +51,7 @@ def sending_matches(message):
             bot.send_document(chat_id=message.chat.id,
                             document=data ,reply_to_message_id=message.message_id)
         elif '/tmatches' in message.text:
-            data = matches(d=1)
+            data = matches(position=1)
             data.name = "tomorrowMatches.png"
             bot.send_document(chat_id=message.chat.id,
                             document=data ,reply_to_message_id=message.message_id)

@@ -4,6 +4,7 @@ import requests,re
 import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
+from datetime import datetime, timedelta
 
 def xbox_games():
     gamesurl = 'https://vandal.elespanol.com/lanzamientos/97/xbox-series-x'
@@ -13,12 +14,9 @@ def xbox_games():
     df = df[['Fecha', 'Juego']]
     return tabulate(df, headers='keys', showindex=False)
 
-def matches(d=None):
+def matches(position=1):
     matches = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
     html = requests.get(matches)
-    position = 0
-    if d != None:
-        position = 1
     cleaned_html = re.sub(r'<br\s*/?>', ' | ', html.text)
     matches = pd.read_html(bytes(cleaned_html, encoding='utf-8'))[position]
     matches['Equipos'].replace("\|","vs",regex=True,inplace=True)
@@ -33,6 +31,9 @@ def matches(d=None):
         df_split = df_split.iloc[:, [-2, -1]]
     matches[['Competición', 'Canal']] = df_split
     matches = matches[['Equipos','Hora','Competición','Canal']]
+    if position==1:
+        current_hour_less_2 = (datetime.now() - timedelta(hours=2)).time()
+        matches = matches[pd.to_datetime(matches['Hora'], format='%I:%M %p').dt.time > current_hour_less_2]
     fig,_ = render_mpl_table(matches, header_columns=0, col_width=9.0)
     plot_file = BytesIO()
     fig.savefig(plot_file,format='png',bbox_inches='tight')
