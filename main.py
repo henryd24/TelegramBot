@@ -46,7 +46,7 @@ def sending_matches(message):
     try:
         logging.info('Getting Matches')
         if '/matches' in message.text:
-            data = matches()
+            data = matches(position=0)
             data.name = "todayMatches.png"
             bot.send_document(chat_id=message.chat.id,
                             document=data ,reply_to_message_id=message.message_id)
@@ -87,4 +87,5 @@ def main():
         logging.info('--------------------------------')
         
 if __name__ == "__main__":
+    logging.info(f'Fecha actual {datetime.now().strftime("%Y-%m-%d %H:%M")}')
     main()  
