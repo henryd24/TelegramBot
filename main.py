@@ -87,5 +87,5 @@ def main():
         logging.info('--------------------------------')
         
 if __name__ == "__main__":
-    logging.info(f'Fecha actual {datetime.now().strftime("%Y-%m-%d %H:%M")}')
+    logging.info(f'Fecha actual: {datetime.now().strftime("%Y-%m-%d %H:%M")}')
     main()  
