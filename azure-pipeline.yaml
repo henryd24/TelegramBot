@@ -10,9 +10,16 @@ pool: $(Agente)
 
 steps:
 - task: Bash@3
+  displayName: Building and Pushing Image
   inputs:
     targetType: 'inline'
     script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t $(IMAGE) --push .'
+
+- task: Bash@3
+  displayName: Cleaning Images
+  inputs:
+    targetType: 'inline'
+    script: 'docker rmi -f henda24/telegrambot:latest $(IMAGE)'
 
 - task: replacetokens@5
   inputs:
