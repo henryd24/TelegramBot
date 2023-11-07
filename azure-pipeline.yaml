@@ -7,17 +7,10 @@ variables:
 pool: $(Agente)
 
 steps:
-- task: Docker@2
+- task: Bash@3
   inputs:
-    containerRegistry: 'DockerHub'
-    repository: 'henda24/telegrambot'
-    command: 'buildAndPush'
-    Dockerfile: '**/Dockerfile'
-    tags: |
-      latest
-      $(Build.BuildId)
-    addPipelineData: false
-    addBaseImageData: false
+    targetType: 'inline'
+    script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t henda24/telegrambot:$(Build.BuildId) --push .'
 
 - task: replacetokens@5
   inputs:
