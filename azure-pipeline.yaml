@@ -1,0 +1,43 @@
+trigger:
+- main
+
+variables:
+- group: 'Telegrambot'
+
+pool: $(Agente)
+
+steps:
+- task: Docker@2
+  inputs:
+    containerRegistry: 'DockerHub'
+    repository: 'henda24/telegrambot'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: |
+      latest
+      $(Build.BuildId)
+    addPipelineData: false
+    addBaseImageData: false
+
+- task: replacetokens@5
+  inputs:
+    rootDirectory: '$(Build.SourcesDirectory)'
+    targetFiles: 'k8s/**.yaml'
+    encoding: 'utf-8'
+    tokenPattern: 'custom'
+    tokenPrefix: '<'
+    tokenSuffix: '>'
+    writeBOM: true
+    actionOnMissing: 'warn'
+    keepToken: false
+    actionOnNoFiles: 'continue'
+    enableTransforms: false
+    enableRecursion: false
+    useLegacyPattern: false
+    enableTelemetry: true
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.SourcesDirectory)/k8s'
+    ArtifactName: 'manifests'
+    publishLocation: 'Container'
