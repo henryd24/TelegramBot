@@ -1,6 +1,8 @@
 trigger:
 - main
 
+pr: none
+
 variables:
 - group: 'Telegrambot'
 - name: IMAGE
