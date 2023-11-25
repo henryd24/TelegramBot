@@ -24,8 +24,8 @@ spec:
         image:  <IMAGE>
         resources:
           limits:
-            cpu: 100m
-            memory: 200Mi
+            cpu: 1
+            memory: 1Gi
         envFrom:
           - secretRef:
               name: telegrambot
