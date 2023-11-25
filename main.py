@@ -4,6 +4,7 @@ from src import *
 
 parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
 parser.add_argument('-t','--token', help='Token to connect in telegram', required=True)
+parser.add_argument('-d','--debug', help='Debug mode', action='store_true', required=False, default=False)
 args = vars(parser.parse_args())
 
 #================================Init Config=====================================================
@@ -14,7 +15,10 @@ else:
     raise SystemError
 
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
-logging.basicConfig(level=logging.DEBUG)
+if args['debug']:
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 #===================================Telegram Config================================================
 @bot.message_handler(commands=['start', 'help'])
@@ -48,13 +52,21 @@ def sending_matches(message):
         if '/matches' in message.text:
             data = matches(position=0)
             data.name = "todayMatches.png"
+            image_url, image_id, delete_key = upload_image(data)
             bot.send_document(chat_id=message.chat.id,
-                            document=data ,reply_to_message_id=message.message_id)
+                            document=image_url ,reply_to_message_id=message.message_id)
+            del_image = delete_image(image_id, delete_key)
+            if del_image:
+                logging.info('Image deleted')
         elif '/tmatches' in message.text:
             data = matches(position=1)
             data.name = "tomorrowMatches.png"
+            image_url, image_id, delete_key = upload_image(data)
             bot.send_document(chat_id=message.chat.id,
-                            document=data ,reply_to_message_id=message.message_id)
+                            document=image_url ,reply_to_message_id=message.message_id)
+            del_image = delete_image(image_id, delete_key)
+            if del_image:
+                logging.info('Image deleted')
     except Exception as e:
         bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
@@ -74,8 +86,8 @@ def random_number(message):
         bot.reply_to(message, msg)
         logging.info('Número enviado con éxito')
     except Exception as e:
-        logging.error("Ocurrió una excepción", exc_info=True)
         bot.reply_to(message, "Ocurrió un error. Inténtalo de nuevo.")
+        logging.error("Ocurrió una excepción", exc_info=True)
 
 def main():
     try:
