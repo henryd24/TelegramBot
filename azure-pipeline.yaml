@@ -13,33 +13,40 @@ steps:
   displayName: Building and Pushing Image
   inputs:
     targetType: 'inline'
-    script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t $(IMAGE) --push .'
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t $(IMAGE) --push .'
+    ${{ else }}:
+      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE) .'
 
 - task: Bash@3
   displayName: Cleaning Images
   inputs:
     targetType: 'inline'
-    script: 'docker rmi -f henda24/telegrambot:latest $(IMAGE)'
+    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+      script: 'docker rmi -f henda24/telegrambot:latest $(IMAGE)'
+    ${{ else }}:
+      script: 'docker rmi -f $(IMAGE)'
 
-- task: replacetokens@5
-  inputs:
-    rootDirectory: '$(Build.SourcesDirectory)'
-    targetFiles: 'k8s/**.yaml'
-    encoding: 'utf-8'
-    tokenPattern: 'custom'
-    tokenPrefix: '<'
-    tokenSuffix: '>'
-    writeBOM: true
-    actionOnMissing: 'warn'
-    keepToken: false
-    actionOnNoFiles: 'continue'
-    enableTransforms: false
-    enableRecursion: false
-    useLegacyPattern: false
-    enableTelemetry: true
+- ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+  - task: replacetokens@5
+    inputs:
+      rootDirectory: '$(Build.SourcesDirectory)'
+      targetFiles: 'k8s/**.yaml'
+      encoding: 'utf-8'
+      tokenPattern: 'custom'
+      tokenPrefix: '<'
+      tokenSuffix: '>'
+      writeBOM: true
+      actionOnMissing: 'warn'
+      keepToken: false
+      actionOnNoFiles: 'continue'
+      enableTransforms: false
+      enableRecursion: false
+      useLegacyPattern: false
+      enableTelemetry: true
 
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.SourcesDirectory)/k8s'
-    ArtifactName: 'manifests'
-    publishLocation: 'Container'
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.SourcesDirectory)/k8s'
+      ArtifactName: 'manifests'
+      publishLocation: 'Container'
