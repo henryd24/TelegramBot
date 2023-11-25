@@ -7,6 +7,12 @@ from io import BytesIO
 from datetime import datetime, timedelta
 
 def xbox_games():
+    """
+    Retrieves the latest Xbox Series X games from a website and returns them in a tabulated format.
+
+    Returns:
+        str: A tabulated representation of the latest Xbox Series X games, including the release date and game title.
+    """
     gamesurl = 'https://vandal.elespanol.com/lanzamientos/97/xbox-series-x'
     html = requests.get(gamesurl).content
     df_list = pd.read_html(html)
@@ -15,6 +21,15 @@ def xbox_games():
     return tabulate(df, headers='keys', showindex=False)
 
 def matches(position=0):
+    """
+    Retrieves football matches information from a website and returns a plot file.
+
+    Args:
+        position (int, optional): The position of the match table to retrieve. Defaults to 0.
+
+    Returns:
+        BytesIO: A plot file containing the matches information.
+    """
     matches = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
     html = requests.get(matches)
     cleaned_html = re.sub(r'<br\s*/?>', ' | ', html.text)
@@ -44,6 +59,26 @@ def render_mpl_table(data, col_width=5.0, row_height=1.0, font_size=18,
                      header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='w',
                      bbox=[0, 0, 1, 1], header_columns=0,
                      ax=None, **kwargs):
+    """
+    Render a table using Matplotlib.
+
+    Parameters:
+    - data: pandas DataFrame or similar data structure containing the table data.
+    - col_width: float, optional, default: 5.0. Width of each column in the table.
+    - row_height: float, optional, default: 1.0. Height of each row in the table.
+    - font_size: int, optional, default: 18. Font size of the table text.
+    - header_color: str, optional, default: '#40466e'. Color of the table header.
+    - row_colors: list of str, optional, default: ['#f1f1f2', 'w']. Colors of the table rows.
+    - edge_color: str, optional, default: 'w'. Color of the table cell borders.
+    - bbox: list of float, optional, default: [0, 0, 1, 1]. Bounding box of the table.
+    - header_columns: int, optional, default: 0. Number of header columns in the table.
+    - ax: matplotlib Axes, optional. Axes object to render the table on. If not provided, a new figure and axes will be created.
+    - **kwargs: Additional keyword arguments to be passed to the ax.table() function.
+
+    Returns:
+    - fig: matplotlib Figure. The figure containing the rendered table.
+    - ax: matplotlib Axes. The axes containing the rendered table.
+    """
     if ax is None:
         size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
         fig, ax = plt.subplots(figsize=size)
