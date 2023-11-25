@@ -1,0 +1,10 @@
+# Ignoring specific files
+README.md
+docker-compose.yml
+azure-pipelines.yml
+.gitignore
+
+k8s/
+
+src/__pycache__/
+Dockerfile
