@@ -1,6 +1,7 @@
 import argparse
 import telebot,logging
 from src import *
+import gc
 
 parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
 parser.add_argument('-t','--token', help='Token to connect in telegram', required=True)
@@ -14,7 +15,7 @@ else:
     print("Please set TOKEN parameter")
     raise SystemError
 
-bot = telebot.TeleBot(TOKEN, parse_mode=None)
+bot = telebot.TeleBot(TOKEN, parse_mode=None, threaded=True, num_threads=2)
 if args['debug']:
     logging.basicConfig(level=logging.DEBUG)
 else:
@@ -34,6 +35,10 @@ def trm(message):
         logging.info('Sending TRM')
     except Exception as e:
         logging.error("Exception ocurred", exc_info=True)
+    finally:
+        logging.info('--------------------------------')
+        logging.info(gc.collect())
+        logging.info('--------------------------------')
 
 @bot.message_handler(commands=['upgames'])
 def upcoming_releases(message):
@@ -44,7 +49,10 @@ def upcoming_releases(message):
         logging.info('Sending games')
     except Exception as e:
         logging.error("Exception ocurred", exc_info=True)
-        
+    finally:
+        logging.info('--------------------------------')
+        logging.info(gc.collect())
+        logging.info('--------------------------------')        
 @bot.message_handler(commands=['matches','tmatches'])
 def sending_matches(message):
     try:
@@ -70,7 +78,10 @@ def sending_matches(message):
     except Exception as e:
         bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
-
+    finally:
+        logging.info('--------------------------------')
+        logging.info(gc.collect())
+        logging.info('--------------------------------')
 @bot.message_handler(commands=['random'])
 def random_number(message):
     try:
@@ -88,7 +99,11 @@ def random_number(message):
     except Exception as e:
         bot.reply_to(message, "Ocurrió un error. Inténtalo de nuevo.")
         logging.error("Ocurrió una excepción", exc_info=True)
-
+    finally:
+        logging.info('--------------------------------')
+        logging.info(gc.collect())
+        logging.info('--------------------------------')
+        
 def main():
     try:
         logging.info('Iniciando Bot')
