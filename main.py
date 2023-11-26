@@ -61,6 +61,7 @@ def sending_matches(message):
             data = matches(position=0)
             data.name = "todayMatches.png"
             image_url, image_id, delete_key = upload_image(data)
+            data.close()
             bot.send_document(chat_id=message.chat.id,
                             document=image_url ,reply_to_message_id=message.message_id)
             del_image = delete_image(image_id, delete_key)
@@ -70,6 +71,7 @@ def sending_matches(message):
             data = matches(position=1)
             data.name = "tomorrowMatches.png"
             image_url, image_id, delete_key = upload_image(data)
+            data.close()
             bot.send_document(chat_id=message.chat.id,
                             document=image_url ,reply_to_message_id=message.message_id)
             del_image = delete_image(image_id, delete_key)
