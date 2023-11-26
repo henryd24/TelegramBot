@@ -15,7 +15,7 @@ else:
     print("Please set TOKEN parameter")
     raise SystemError
 
-bot = telebot.TeleBot(TOKEN, parse_mode=None, threaded=True, num_threads=2)
+bot = telebot.TeleBot(TOKEN, parse_mode=None)
 if args['debug']:
     logging.basicConfig(level=logging.DEBUG)
 else:
