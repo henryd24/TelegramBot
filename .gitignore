@@ -5,3 +5,5 @@ pruebas.ipynb
 .env
 session/*
 **/.DS_Store
+venv/*
+venv/

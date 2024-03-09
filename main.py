@@ -60,23 +60,15 @@ def sending_matches(message):
         if '/matches' in message.text:
             data = matches(position=0)
             data.name = "todayMatches.png"
-            image_url, image_id, delete_key = upload_image(data)
-            data.close()
             bot.send_document(chat_id=message.chat.id,
-                            document=image_url ,reply_to_message_id=message.message_id)
-            del_image = delete_image(image_id, delete_key)
-            if del_image:
-                logging.info('Image deleted')
+                            document=data ,reply_to_message_id=message.message_id)
+            data.close()
         elif '/tmatches' in message.text:
             data = matches(position=1)
             data.name = "tomorrowMatches.png"
-            image_url, image_id, delete_key = upload_image(data)
-            data.close()
             bot.send_document(chat_id=message.chat.id,
-                            document=image_url ,reply_to_message_id=message.message_id)
-            del_image = delete_image(image_id, delete_key)
-            if del_image:
-                logging.info('Image deleted')
+                            document=data ,reply_to_message_id=message.message_id)
+            data.close()
     except Exception as e:
         bot.reply_to(message, "Not matches for today or failed send message, try one more time")
         logging.error("Exception ocurred", exc_info=True)
