@@ -58,13 +58,13 @@ def sending_matches(message):
     try:
         logging.info('Getting Matches')
         if '/matches' in message.text:
-            data = matches(position=0)
+            data = matches(position=1)
             data.name = "todayMatches.png"
             bot.send_document(chat_id=message.chat.id,
                             document=data ,reply_to_message_id=message.message_id)
             data.close()
         elif '/tmatches' in message.text:
-            data = matches(position=1)
+            data = matches(position=2)
             data.name = "tomorrowMatches.png"
             bot.send_document(chat_id=message.chat.id,
                             document=data ,reply_to_message_id=message.message_id)
