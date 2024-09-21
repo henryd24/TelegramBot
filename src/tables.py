@@ -1,12 +1,13 @@
-from  tabulate import tabulate
+from tabulate import tabulate
 import pandas as pd
-import requests,re
-import numpy as np
+import requests
+import re
 import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime, timedelta
+import textwrap
 
-def xbox_games():
+def xbox_games() -> str:
     """
     Retrieves the latest Xbox Series X games from a website and returns them in a tabulated format.
 
@@ -20,7 +21,21 @@ def xbox_games():
     df = df[['Fecha', 'Juego']]
     return tabulate(df, headers='keys', showindex=False)
 
-def matches(position=0):
+def wrap_text(text, width=20) -> str:
+    """
+    Wraps the input text to a specified width.
+    This function takes a string and wraps it so that each line does not exceed
+    the specified width. The wrapped text is returned as a single string with
+    newline characters separating the lines.
+    Args:
+        text (str): The input text to be wrapped.
+        width (int, optional): The maximum width of each line. Defaults to 20.
+    Returns:
+        str: The wrapped text with lines separated by newline characters.
+    """
+    return "\n".join(textwrap.wrap(text, width))
+
+def matches(position=0) -> BytesIO:
     """
     Retrieves football matches information from a website and returns a plot file.
 
@@ -30,68 +45,95 @@ def matches(position=0):
     Returns:
         BytesIO: A plot file containing the matches information.
     """
-    matches = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
-    html = requests.get(matches)
-    cleaned_html = re.sub(r'<br\s*/?>', ' | ', html.text)
-    matches = pd.read_html(bytes(cleaned_html, encoding='utf-8'))[position]
-    matches['Equipos'].replace("\|","vs",regex=True,inplace=True)
-    hour = []
-    for values in matches['Hora/Canal']:
-        hour.append(re.search(r"^\d+:\d+\s[am|pm]+",values).group())
-    matches['Hora'] = hour
-    matches['Canal'] =  matches['Hora/Canal'].str.replace('^.*\| ','',regex=True)
-    df_split = matches['Canal'].str.rsplit('-', n=1, expand=True)
-    if df_split.shape[1] > 2:
-        df_split[0] = df_split.iloc[:, :-1].apply(lambda x: '-'.join(x.dropna()), axis=1)
-        df_split = df_split.iloc[:, [-2, -1]]
-    matches[['Competición', 'Canal']] = df_split
-    matches = matches[['Equipos','Hora','Competición','Canal']]
-    if position==0:
-        current_hour_less_2 = (datetime.now() - timedelta(hours=2)).time()
-        matches = matches[pd.to_datetime(matches['Hora'], format='%I:%M %p').dt.time > current_hour_less_2]
-    fig,_ = render_mpl_table(matches, header_columns=0, col_width=9.0)
-    plot_file = BytesIO()
-    fig.savefig(plot_file,format='png',bbox_inches='tight')
-    plot_file.seek(0)
-    return plot_file
+    matches_url = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
+    html = requests.get(matches_url).text
+    cleaned_html = re.sub(r'<br\s*/?>', ' | ', html)
+    matches_table = pd.read_html(bytes(cleaned_html, encoding='utf-8'))[position]
+    
+    matches_table['Equipos'].replace("\\|", "vs", regex=True, inplace=True)
+    matches_table['Hora'] = matches_table['Hora/Canal'].str.extract(r"(\d+:\d+\s[ap]m)")
+    matches_table['Canal'] = matches_table['Hora/Canal'].str.split('|').str[-1]
+    df_split = matches_table['Canal'].str.rsplit('-', n=1, expand=True)
+    
+    matches_table[['Competición', 'Canal']] = df_split
+    matches_table = matches_table[['Equipos', 'Hora', 'Competición', 'Canal']]
 
-def render_mpl_table(data, col_width=5.0, row_height=1.0, font_size=18,
-                     header_color='#40466e', row_colors=['#f1f1f2', 'w'], edge_color='w',
-                     bbox=[0, 0, 1, 1], header_columns=0,
-                     ax=None, **kwargs):
-    """
-    Render a table using Matplotlib.
+    if position == 0:
+        def time_(match_time_str):
+            today_str = datetime.now().strftime("%Y-%m-%d")
+            match_time = datetime.strptime(today_str + " " + match_time_str, "%Y-%m-%d %I:%M %p")
+            current_time = datetime.now()
 
-    Parameters:
-    - data: pandas DataFrame or similar data structure containing the table data.
-    - col_width: float, optional, default: 5.0. Width of each column in the table.
-    - row_height: float, optional, default: 1.0. Height of each row in the table.
-    - font_size: int, optional, default: 18. Font size of the table text.
-    - header_color: str, optional, default: '#40466e'. Color of the table header.
-    - row_colors: list of str, optional, default: ['#f1f1f2', 'w']. Colors of the table rows.
-    - edge_color: str, optional, default: 'w'. Color of the table cell borders.
-    - bbox: list of float, optional, default: [0, 0, 1, 1]. Bounding box of the table.
-    - header_columns: int, optional, default: 0. Number of header columns in the table.
-    - ax: matplotlib Axes, optional. Axes object to render the table on. If not provided, a new figure and axes will be created.
-    - **kwargs: Additional keyword arguments to be passed to the ax.table() function.
+            if match_time <= current_time <= match_time + timedelta(minutes=90):
+                return True, "(En juego)"
+            
+            if match_time > current_time:
+                time_until_start = match_time - current_time
+                hours, remainder = divmod(time_until_start.seconds, 3600)
+                minutes = remainder // 60
+                return True, f"(Faltan {hours}h {minutes}m)" if hours > 0 else f"(Faltan {minutes}m)"
+            
+            return False, None
 
-    Returns:
-    - fig: matplotlib Figure. The figure containing the rendered table.
-    - ax: matplotlib Axes. The axes containing the rendered table.
-    """
-    if ax is None:
-        size = (np.array(data.shape[::-1]) + np.array([0, 1])) * np.array([col_width, row_height])
-        fig, ax = plt.subplots(figsize=size)
+        match_ = matches_table['Hora'].apply(time_)
+        matches_table[''] = match_.apply(lambda x: x[1])
+        matches_table = matches_table[match_.apply(lambda x: x[0])]
+        matches_table['Hora'] = matches_table['Hora'] + " " + matches_table['']
+
+    elif position == 1:
+        matches_table[''] = "(Mañana)"
+        matches_table['Hora'] = matches_table['Hora'] + " " + matches_table['']
+
+    matches_table = matches_table.drop(columns=[''])
+
+    if matches_table.empty:
+        fig, ax = plt.subplots(figsize=(5, 2))
+        ax.text(0.5, 0.5, 'No hay partidos disponibles', horizontalalignment='center', verticalalignment='center', fontsize=12)
         ax.axis('off')
-    mpl_table = ax.table(cellText=data.values, bbox=bbox, colLabels=data.columns, **kwargs)
-    mpl_table.auto_set_font_size(False)
-    mpl_table.set_fontsize(font_size)
+        img_io = BytesIO()
+        plt.savefig(img_io, format='png', bbox_inches='tight', pad_inches=0)
+        img_io.seek(0)
+        plt.close(fig)
+        return img_io
 
-    for k, cell in mpl_table._cells.items():
+   
+    matches_table['Equipos'] = matches_table['Equipos'].apply(lambda x: wrap_text(x, width=30))
+    matches_table['Competición'] = matches_table['Competición'].apply(lambda x: wrap_text(x, width=25))
+    matches_table['Canal'] = matches_table['Canal'].apply(lambda x: wrap_text(x, width=30))
+
+    fig, ax = plt.subplots(figsize=(15, 10)) 
+    ax.axis('tight')
+    ax.axis('off')
+
+    mpl_table = ax.table(cellText=matches_table.values, colLabels=matches_table.columns, cellLoc='center', loc='center')
+
+    mpl_table.auto_set_font_size(False)
+    mpl_table.set_fontsize(10)
+
+   
+    mpl_table.scale(1.2, 2) 
+
+   
+    header_color = '#40466e'
+    row_colors = ['#f1f1f2', 'w']
+    edge_color = 'black'
+
+    for (i, j), cell in mpl_table._cells.items():
         cell.set_edgecolor(edge_color)
-        if k[0] == 0 or k[1] < header_columns:
+        if i == 0:
             cell.set_text_props(weight='bold', color='w')
             cell.set_facecolor(header_color)
         else:
-            cell.set_facecolor(row_colors[k[0]%len(row_colors) ])
-    return ax.get_figure(), ax
+            cell.set_facecolor(row_colors[i % len(row_colors)])
+        if j in (0, 1, 2, 3): 
+            cell.set_height(cell.get_height() * 1.2) 
+
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+
+    img_io = BytesIO()
+    plt.savefig(img_io, format='png', bbox_inches='tight', pad_inches=0)
+    img_io.seek(0)
+    
+    plt.close(fig)
+    
+    return img_io
