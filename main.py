@@ -6,7 +6,6 @@ from src.nrandom import most_common_number
 import gc
 import requests
 
-# Inicializa una sesión global para reutilizar conexiones HTTP
 session = requests.Session()
 
 parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
