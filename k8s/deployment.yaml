@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name:  telegrambot
-        image:  henda24/telegrambot:1494
+        image:  henda24/telegrambot:1670
         resources:
           limits:
             cpu: 1
