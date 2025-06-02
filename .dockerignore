@@ -1,9 +1,10 @@
 # Ignoring specific files
 README.md
 docker-compose.yaml
-azure-pipelines.yaml
+azure-pipeline.yaml
 .gitignore
-
+Makefile
+requeriments.txt
 k8s/
 
 src/__pycache__/

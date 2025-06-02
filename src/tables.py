@@ -6,6 +6,11 @@ import matplotlib.pyplot as plt
 from io import BytesIO
 from datetime import datetime, timedelta
 import textwrap
+from bs4 import BeautifulSoup
+from .logger import setup_logging
+
+logger = setup_logging()
+
 
 def xbox_games() -> str:
     """
@@ -46,11 +51,33 @@ def matches(position=0) -> BytesIO:
         BytesIO: A plot file containing the matches information.
     """
     matches_url = 'https://www.lapelotona.com/partidos-de-futbol-para-hoy-en-vivo/'
+    position_data = {
+        0: 'partidos-hoy',
+        1: 'partidos-manana',
+    }
     html = requests.get(matches_url).text
     cleaned_html = re.sub(r'<br\s*/?>', ' | ', html)
-    matches_table = pd.read_html(bytes(cleaned_html, encoding='utf-8'))[position]
-    
-    matches_table['Equipos'].replace("\\|", "vs", regex=True, inplace=True)
+    soup = BeautifulSoup(cleaned_html, 'html.parser')
+    tables = soup.find_all('table', id=lambda x: x and x.startswith(position_data.get(position, 'partidos-hoy')))
+    dataframes = []
+    reference_columns = None
+    for idx, table in enumerate(tables):
+        try:
+            df = pd.read_html(str(table), header=0)[0]
+            if reference_columns is None:
+                reference_columns = df.columns
+            else:
+                if not df.columns.equals(reference_columns):
+                    df.columns = reference_columns 
+            dataframes.append(df)
+        except Exception as e:
+            logger.error(f"Error processing table {idx}: {e}")
+            
+    if dataframes:
+        matches_table = pd.concat(dataframes, ignore_index=True)
+    else:
+        matches_table = pd.DataFrame(columns=['Equipos', 'Hora/Canal'])
+    matches_table['Equipos'] = matches_table['Equipos'].replace("\\|", "vs", regex=True)
     matches_table['Hora'] = matches_table['Hora/Canal'].str.extract(r"(\d+:\d+\s[ap]m)")
     matches_table['Canal'] = matches_table['Hora/Canal'].str.split('|').str[-1]
     df_split = matches_table['Canal'].str.rsplit('-', n=1, expand=True)
