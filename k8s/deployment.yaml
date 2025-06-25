@@ -18,6 +18,7 @@ spec:
         app: telegrambot
     spec:
       securityContext:
+        runAsNonRoot: false
         allowPrivilegeEscalation: false
         readOnlyRootFilesystem: true
       containers:
