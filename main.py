@@ -6,17 +6,20 @@ from src.tables import xbox_games, matches
 from src.nrandom import most_common_number
 import gc
 import requests
-
+import os
+# =================================== Init ============================================================
 session = requests.Session()
 
 parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
-parser.add_argument('-t', '--token', help='Token to connect in telegram', required=True)
+parser.add_argument('-t', '--token', help='Token to connect in telegram', required=False)
 args = vars(parser.parse_args())
 
 logger = setup_logging()
 # =================================== Init Config =====================================================
 if args['token'] is not None:
     TOKEN = args['token']
+elif 'TOKEN' in os.environ:
+    TOKEN = os.environ['TOKEN']
 else:
     print("Please set TOKEN parameter")
     raise SystemError

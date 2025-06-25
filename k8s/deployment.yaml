@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  telegrambot
+  name: telegrambot
   namespace: services
   labels:
-    app:  telegrambot
+    app: telegrambot
 spec:
   selector:
     matchLabels:
@@ -15,24 +15,26 @@ spec:
   template:
     metadata:
       labels:
-        app:  telegrambot
+        app: telegrambot
     spec:
+      securityContext:
+        runAsNonRoot: true
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
       containers:
-      - name:  telegrambot
-        image:  henda24/telegrambot:1670
-        resources:
-          limits:
-            cpu: 1
-            memory: 1Gi
-        envFrom:
-          - secretRef:
-              name: telegrambot
-        command: ["python", "./main.py"]
-        args: ["--token", "$(TOKEN)"]
-        volumeMounts:
-          - name:  tz-config
-            mountPath:  /etc/localtime
+        - name: telegrambot
+          image: henda24/telegrambot:1671
+          resources:
+            limits:
+              cpu: 1
+              memory: 1Gi
+          envFrom:
+            - secretRef:
+                name: telegrambot
+          volumeMounts:
+            - name: tz-config
+              mountPath: /etc/localtime
       volumes:
-      - name: tz-config
-        hostPath:
-          path: /etc/localtime
+        - name: tz-config
+          hostPath:
+            path: /etc/localtime
