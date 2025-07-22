@@ -9,7 +9,7 @@ image:
 
 imagePullSecrets: []
 nameOverride: ""
-fullnameOverride: "codevsecops_test_ms"
+fullnameOverride: "codevsecops-test-ms"
 
 podAnnotations:
   prometheus.io/scrape: "true"
