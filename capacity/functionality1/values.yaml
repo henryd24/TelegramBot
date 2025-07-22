@@ -12,14 +12,6 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: "codevsecops-test-ms"
 
-podAnnotations:
-  prometheus.io/scrape: "true"
-  prometheus.io/port: "80"
-
-podLabels:
-  app.kubernetes.io/component: web
-  app.kubernetes.io/instance: google-instance
-
 podSecurityContext:
   fsGroup: 2000
 
