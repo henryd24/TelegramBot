@@ -3,7 +3,7 @@ namespace: test
 replicaCount: 2
 
 image:
-  repository: us-docker.pkg.dev/google-samples/containers/gke/hello-app
+  repository: "us-docker.pkg.dev/google-samples/containers/gke/hello-app"
   pullPolicy: IfNotPresent
   tag: "1.0"
 
