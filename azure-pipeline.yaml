@@ -56,7 +56,7 @@ steps:
     script: |
       git config --global --add safe.directory "$(pwd)"
       git config --local user.name  "CI Bot"
-      git config --local user.email "ci-bot@example.com"
+      git config --local user.email "ci-bot@henryd24.com"
       git config --local commit.gpgsign false
       git config --local tag.gpgsign false
 
