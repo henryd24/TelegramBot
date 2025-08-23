@@ -2,7 +2,9 @@ trigger:
   branches:
     include:
       - main
-
+  paths:
+    exclude:
+    - k8s/*
 pr: none
 
 pool: $(Agente)
