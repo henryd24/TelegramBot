@@ -5,7 +5,7 @@ trigger:
 
 pr: none
 
-pool: $(Agent)
+pool: $(Agente)
 
 variables:
   - group: 'Telegrambot'
