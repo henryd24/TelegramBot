@@ -1,52 +1,67 @@
 trigger:
-- main
+  branches:
+    include:
+      - main
 
-variables:
-- group: 'Telegrambot'
-- name: IMAGE
-  value: 'henda24/telegrambot:$(Build.BuildId)'
+pr: none
 
 pool: $(Agente)
 
+variables:
+  - group: 'Telegrambot'
+    value: 'henda24/telegrambot'
+  - name: imageTag
+    value: '$(Build.BuildId)'
+  - name: imageFullName
+    value: '$(imageName):$(imageTag)'
+
 steps:
+- checkout: self
+  persistCredentials: true # Allows the pipeline to push back to the repo
+
 - task: Bash@3
   displayName: Building and Pushing Image
   inputs:
     targetType: 'inline'
     ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t $(IMAGE) --push .'
+      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t henda24/telegrambot:latest -t $(imageFullName) --push .'
     ${{ else }}:
-      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t $(IMAGE) .'
+      script: 'docker buildx build --platform linux/amd64,linux/arm64 -t $(imageFullName) .'
 
 - task: Bash@3
-  displayName: Cleaning Images
+  displayName: 'Update Kubernetes Manifest'
   inputs:
     targetType: 'inline'
-    ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-      script: 'docker rmi -f henda24/telegrambot:latest $(IMAGE)'
-    ${{ else }}:
-      script: 'docker rmi -f $(IMAGE)'
+    script: |
+      echo "Updating deployment with image: $(imageFullName)"
+      export IMAGE="$(imageFullName)"
 
-- ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
-  - task: replacetokens@5
-    inputs:
-      rootDirectory: '$(Build.SourcesDirectory)'
-      targetFiles: 'k8s/**.yaml'
-      encoding: 'utf-8'
-      tokenPattern: 'custom'
-      tokenPrefix: '<'
-      tokenSuffix: '>'
-      writeBOM: true
-      actionOnMissing: 'warn'
-      keepToken: false
-      actionOnNoFiles: 'continue'
-      enableTransforms: false
-      enableRecursion: false
-      useLegacyPattern: false
-      enableTelemetry: true
+      # Install yq if missing
+      if ! command -v yq >/dev/null 2>&1; then
+        echo "Installing yq..."
+        sudo wget -q -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+        sudo chmod +x /usr/local/bin/yq
+      fi
 
-  - task: PublishBuildArtifacts@1
-    inputs:
-      PathtoPublish: '$(Build.SourcesDirectory)/k8s'
-      ArtifactName: 'manifests'
-      publishLocation: 'Container'
+      # Update container image(s) in the deployment manifest
+      yq eval -i '.spec.template.spec.containers[].image = strenv(IMAGE)' k8s/deployment.yaml
+
+- task: Bash@3
+  displayName: 'Commit and Push Manifest Changes'
+  inputs:
+    targetType: 'inline'
+    script: |
+      git config --global user.email "pipeline@azuredevops.com"
+      git config --global user.name "Azure DevOps Pipeline"
+      
+      git checkout main
+      
+      git add $(Build.SourcesDirectory)/k8s/deployment.yaml
+      
+      # Check if there are changes to commit
+      if ! git diff --staged --quiet; then
+        git commit -m "[CI] Update image to $(imageFullName)"
+        git push origin main
+      else
+        echo "No changes to commit."
+      fi

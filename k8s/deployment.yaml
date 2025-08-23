@@ -20,13 +20,15 @@ spec:
       - name:  telegrambot
         image:  <IMAGE>
         resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
           limits:
-            cpu: 1
-            memory: 1Gi
+            cpu: "1"
+            memory: "1Gi"
         envFrom:
           - secretRef:
               name: telegrambot
-        command: ["python", "./main.py"]
         args: ["--token", "$(TOKEN)"]
         volumeMounts:
           - name:  tz-config

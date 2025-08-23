@@ -1,38 +1,34 @@
-CONDA_ENV=telegrambot
+SHELL := /bin/bash
 
-PYTHON_VERSION=3.11
+.PHONY: help install deps run clean
 
-REQUIREMENTS=requirements.txt
+help:
+	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Targets:"
+	@echo "  help		Show this help message"
+	@echo "  install	Create virtual environment and install dependencies"
+	@echo "  deps		Compile pyproject.toml to requirements.txt"
+	@echo "  run		Run the application"
+	@echo "  clean		Remove virtual environment and compiled files"
 
-venv:
-	@if [ ! -d ".venv" ]; then \
-		echo "🔧 Creando entorno virtual .venv con Python $(PYTHON_VERSION)..."; \
-		python$(PYTHON_VERSION) -m venv .venv; \
-	else \
-		echo "✅ Entorno virtual .venv ya existe."; \
-	fi
-	@echo "📢 Ejecuta: source .venv/bin/activate"
+install: .venv/pyvenv.cfg
 
-conda:
-	@if ! conda info --envs | grep -q "^$(CONDA_ENV)\s"; then \
-		echo "🔧 Creando entorno conda '$(CONDA_ENV)' con Python $(PYTHON_VERSION)..."; \
-		conda create -n $(CONDA_ENV) python=$(PYTHON_VERSION) -y; \
-	else \
-		echo "✅ El entorno conda '$(CONDA_ENV)' ya existe."; \
-	fi
-	@echo "📢 Ejecuta: conda activate $(CONDA_ENV)"
+.venv/pyvenv.cfg: pyproject.toml
+	@uv venv
+	@touch .venv/pyvenv.cfg
+	@make deps
+	@uv pip sync requirements.txt
 
-install:
-	@echo "📦 Instalando dependencias desde $(REQUIREMENTS)..."
-	@.venv/bin/pip install -r $(REQUIREMENTS) || \
-	( echo "⚠️  Activa el entorno antes de instalar: source .venv/bin/activate" && false )
+
+deps:
+	@echo "Compiling dependencies..."
+	@uv pip compile pyproject.toml -o requirements.txt
+
+run: install
+	@echo "Starting application..."
+	@uv run python main.py
 
 clean:
-	@echo "🧹 Eliminando entorno virtual .venv..."
-	rm -rf .venv
-
-clean-conda:
-	@echo "🧹 Eliminando entorno conda $(CONDA_ENV)..."
-	conda remove -n $(CONDA_ENV) --all -y
-
-.PHONY: venv conda install clean clean-conda
+	@rm -rf .venv
+	@rm -f requirements.txt

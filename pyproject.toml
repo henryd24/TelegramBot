@@ -1,0 +1,16 @@
+[project]
+name = ""
+requires-python = ">=3.11,<3.12"
+version = "0.0.1"
+dependencies = [
+    "beautifulsoup4==4.11.2",
+    "matplotlib==3.8.4",
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+    "pytelegrambotapi==4.9.0",
+    "requests==2.32.2",
+    "tabulate==0.8.10",
+    "lxml==5.2.2",
+]
+
+
