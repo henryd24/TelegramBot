@@ -9,6 +9,7 @@ pool: $(Agente)
 
 variables:
   - group: 'Telegrambot'
+  - name: imageName
     value: 'henda24/telegrambot'
   - name: imageTag
     value: '$(Build.BuildId)'
