@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  telegrambot
+  name: telegrambot
   labels:
-    app:  telegrambot
+    app: telegrambot
 spec:
   selector:
     matchLabels:
@@ -14,26 +14,26 @@ spec:
   template:
     metadata:
       labels:
-        app:  telegrambot
+        app: telegrambot
     spec:
       containers:
-      - name:  telegrambot
-        image:  <IMAGE>
-        resources:
-          requests:
-            cpu: "250m"
-            memory: "256Mi"
-          limits:
-            cpu: "1"
-            memory: "1Gi"
-        envFrom:
-          - secretRef:
-              name: telegrambot
-        args: ["--token", "$(TOKEN)"]
-        volumeMounts:
-          - name:  tz-config
-            mountPath:  /etc/localtime
+        - name: telegrambot
+          image: henda24/telegrambot:1710
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          envFrom:
+            - secretRef:
+                name: telegrambot
+          args: ["--token", "$(TOKEN)"]
+          volumeMounts:
+            - name: tz-config
+              mountPath: /etc/localtime
       volumes:
-      - name: tz-config
-        hostPath:
-          path: /etc/localtime
+        - name: tz-config
+          hostPath:
+            path: /etc/localtime
