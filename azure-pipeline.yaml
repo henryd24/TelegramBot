@@ -5,7 +5,8 @@ trigger:
 
 pr: none
 
-pool: $(Agente)
+pool: 
+ vmImage: ubuntu
 
 variables:
   - group: 'Telegrambot'
@@ -18,7 +19,7 @@ variables:
 
 steps:
 - checkout: self
-  persistCredentials: true # Allows the pipeline to push back to the repo
+  persistCredentials: true
 
 - task: Bash@3
   displayName: Building and Pushing Image
@@ -43,8 +44,6 @@ steps:
         sudo wget -q -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
         sudo chmod +x /usr/local/bin/yq
       fi
-
-      # Update container image(s) in the deployment manifest
       yq eval -i '.spec.template.spec.containers[].image = strenv(IMAGE)' k8s/deployment.yaml
 
 - task: Bash@3
@@ -59,7 +58,6 @@ steps:
       
       git add $(Build.SourcesDirectory)/k8s/deployment.yaml
       
-      # Check if there are changes to commit
       if ! git diff --staged --quiet; then
         git commit -m "[CI] Update image to $(imageFullName)"
         git push origin main
