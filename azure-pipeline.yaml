@@ -5,8 +5,7 @@ trigger:
 
 pr: none
 
-pool:
-  vmImage: ubuntu-latest
+pool: $(Agent)
 
 variables:
   - group: 'Telegrambot'
@@ -53,13 +52,14 @@ steps:
     script: |
       git config --global user.email "pipeline@azuredevops.com"
       git config --global user.name "Azure DevOps Pipeline"
-      
+      git config --local commit.gpgsign false
+      git config --local tag.gpgsign false
       git checkout main
       
       git add $(Build.SourcesDirectory)/k8s/deployment.yaml
       
       if ! git diff --staged --quiet; then
-        git commit -m "[CI] Update image to $(imageFullName)"
+        git commit --no-gpg-sign -m "[CI] Update image to $(imageFullName)"
         git push origin main
       else
         echo "No changes to commit."
