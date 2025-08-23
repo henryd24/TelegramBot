@@ -18,7 +18,9 @@ variables:
 
 steps:
 - checkout: self
-  persistCredentials: true
+  fetchDepth: 0
+  persistCredentials: true 
+  clean: true
 
 - task: Bash@3
   displayName: Building and Pushing Image
