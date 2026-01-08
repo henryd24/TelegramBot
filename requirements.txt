@@ -56,7 +56,7 @@ tabulate==0.8.10
     # via  (pyproject.toml)
 tzdata==2025.2
     # via pandas
-urllib3==2.5.0
+urllib3==2.6.3
     # via requests
 zipp==3.23.0
     # via importlib-resources
