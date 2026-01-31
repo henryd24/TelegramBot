@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: telegrambot
-          image: henda24/telegrambot:1720
+          image: henda24/telegrambot:1721
           resources:
             requests:
               cpu: "250m"
@@ -27,10 +27,10 @@ spec:
               cpu: "1"
               memory: "1Gi"
           env:
-          - name: MPLCONFIGDIR
-            value: "/tmp/matplotlib_cache"
-          - name: MPLBACKEND
-            value: "Agg"
+            - name: MPLCONFIGDIR
+              value: "/tmp/matplotlib_cache"
+            - name: MPLBACKEND
+              value: "Agg"
           envFrom:
             - secretRef:
                 name: telegrambot
