@@ -1,4 +1,5 @@
-FROM python:3.11-slim
+FROM python:3.11.8-slim
+ENV MPLBACKEND=Agg
 WORKDIR /app
 RUN pip install uv
 COPY pyproject.toml ./
