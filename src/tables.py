@@ -3,7 +3,7 @@ import pandas as pd
 import requests
 import re
 import matplotlib.pyplot as plt
-from io import BytesIO
+from io import BytesIO, StringIO
 from datetime import datetime, timedelta
 import textwrap
 from bs4 import BeautifulSoup
@@ -21,7 +21,7 @@ def xbox_games() -> str:
     """
     gamesurl = 'https://vandal.elespanol.com/lanzamientos/97/xbox-series-x'
     html = requests.get(gamesurl).content
-    df_list = pd.read_html(html)
+    df_list = pd.read_html(StringIO(html.decode('utf-8')))
     df = df_list[-1]
     df = df[['Fecha', 'Juego']]
     return tabulate(df, headers='keys', showindex=False)
@@ -63,7 +63,7 @@ def matches(position=0) -> BytesIO:
     reference_columns = None
     for idx, table in enumerate(tables):
         try:
-            df = pd.read_html(str(table), header=0)[0]
+            df = pd.read_html(StringIO(str(table)), header=0)[0]
             if reference_columns is None:
                 reference_columns = df.columns
             else:
