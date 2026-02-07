@@ -12,6 +12,7 @@ dependencies = [
     "tabulate==0.8.10",
     "lxml==5.2.2",
     "urllib3>=2.6.0",
+    "fonttools>=4.60.2",
 ]
 
 

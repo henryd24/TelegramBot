@@ -11,7 +11,9 @@ contourpy==1.3.0
 cycler==0.12.1
     # via matplotlib
 fonttools==4.60.2
-    # via matplotlib
+    # via
+    #    (pyproject.toml)
+    #   matplotlib
 idna==3.10
     # via requests
 kiwisolver==1.4.7
