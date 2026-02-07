@@ -36,7 +36,7 @@ pillow==11.3.0
     # via matplotlib
 pyparsing==3.2.3
     # via matplotlib
-pytelegrambotapi==4.9.0
+pytelegrambotapi==4.30.0
     # via  (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
@@ -57,6 +57,8 @@ tabulate==0.8.10
 tzdata==2025.2
     # via pandas
 urllib3==2.6.3
-    # via requests
+    # via
+    #    (pyproject.toml)
+    #   requests
 zipp==3.23.0
     # via importlib-resources
