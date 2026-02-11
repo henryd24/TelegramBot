@@ -32,7 +32,7 @@ packaging==25.0
     # via matplotlib
 pandas==2.2.2
     # via  (pyproject.toml)
-pillow==11.3.0
+pillow==12.1.1
     # via matplotlib
 pyparsing==3.2.3
     # via matplotlib
