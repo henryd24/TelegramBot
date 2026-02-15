@@ -20,6 +20,7 @@ kiwisolver==1.4.7
     # via matplotlib
 lxml==5.2.2
     # via  (pyproject.toml)
+
 matplotlib==3.10.8
     # via  (pyproject.toml)
 numpy==1.26.4
