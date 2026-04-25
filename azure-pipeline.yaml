@@ -9,6 +9,8 @@ pr: none
 
 pool: $(Agente)
 
+lockBehavior: runLatest
+
 variables:
   - group: 'Telegrambot'
   - name: imageName
