@@ -14,5 +14,7 @@ def setup_logging() -> logging.Logger:
         logging.getLogger().setLevel(logging.DEBUG)
     else:
         logging.getLogger().setLevel(logging.WARNING)
+    logging.getLogger('matplotlib.font_manager').setLevel(logging.WARNING)
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
     logger = logging.getLogger(__name__)
     return logger

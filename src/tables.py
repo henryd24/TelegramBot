@@ -78,12 +78,29 @@ def matches(position=0) -> BytesIO:
     else:
         matches_table = pd.DataFrame(columns=['Equipos', 'Hora/Canal'])
     matches_table['Equipos'] = matches_table['Equipos'].replace("\\|", "vs", regex=True)
-    matches_table['Hora'] = matches_table['Hora/Canal'].str.extract(r"(\d+:\d+\s[ap]m)")
-    matches_table['Canal'] = matches_table['Hora/Canal'].str.split('|').str[-1]
-    df_split = matches_table['Canal'].str.rsplit('-', n=1, expand=True)
-    
-    matches_table[['Competición', 'Canal']] = df_split
-    matches_table = matches_table[['Equipos', 'Hora', 'Competición', 'Canal']]
+
+    matches_table['Hora'] = matches_table['Hora/Canal'].str.extract(r"(\d{1,2}:\d{2}\s[ap]m)")
+
+    matches_table['Resto'] = matches_table['Hora/Canal'].str.replace(r"\d{1,2}:\d{2}\s[ap]m", "", regex=True).str.strip()
+
+    parts = matches_table['Resto'].str.split('|')
+    matches_table['Competición'] = parts.str[0].str.strip()
+
+    no_pipe = ~matches_table['Resto'].str.contains(r'\|', na=False)
+    df_split = matches_table.loc[no_pipe, 'Resto'].str.rsplit('-', n=1, expand=True)
+    if isinstance(df_split, pd.DataFrame) and df_split.shape[1] == 2:
+        matches_table.loc[no_pipe, 'Competición'] = df_split[0].str.strip()
+        matches_table.loc[no_pipe, 'Canal'] = df_split[1].str.strip()
+    else:
+        matches_table.loc[no_pipe, 'Competición'] = matches_table.loc[no_pipe, 'Resto'].str.strip()
+        matches_table.loc[no_pipe, 'Canal'] = None
+
+    matches_table['Competición/Canal'] = matches_table['Competición'].fillna('').astype(str)
+
+    matches_table = matches_table[['Equipos', 'Hora', 'Competición/Canal']]
+    matches_table = matches_table.drop(columns=['Resto'], errors='ignore')
+
+    logger.debug("Selected columns:\n%s", matches_table[['Equipos', 'Hora', 'Competición/Canal']].head(1))
 
     if position == 0:
         def time_(match_time_str):
@@ -123,10 +140,9 @@ def matches(position=0) -> BytesIO:
         plt.close(fig)
         return img_io
 
-   
+    logger.debug("Final matches table:\n%s", matches_table.head(1))
     matches_table['Equipos'] = matches_table['Equipos'].apply(lambda x: wrap_text(x, width=30))
-    matches_table['Competición'] = matches_table['Competición'].apply(lambda x: wrap_text(x, width=25))
-    matches_table['Canal'] = matches_table['Canal'].apply(lambda x: wrap_text(x, width=30))
+    matches_table['Competición/Canal'] = matches_table['Competición/Canal'].apply(lambda x: wrap_text(x, width=25))
 
     fig, ax = plt.subplots(figsize=(15, 10)) 
     ax.axis('tight')
@@ -162,5 +178,5 @@ def matches(position=0) -> BytesIO:
     img_io.seek(0)
     
     plt.close(fig)
-    
+
     return img_io

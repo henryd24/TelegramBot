@@ -1,4 +1,5 @@
 import argparse
+import os
 import telebot
 from src.logger import setup_logging
 from src.money import google_trm
@@ -10,7 +11,7 @@ import requests
 session = requests.Session()
 
 parser = argparse.ArgumentParser(description='Telegram Bot for Caguan Group')
-parser.add_argument('-t', '--token', help='Token to connect in telegram', required=True)
+parser.add_argument('-t', '--token', help='Token to connect in telegram', required=False)
 args = vars(parser.parse_args())
 
 logger = setup_logging()
@@ -19,7 +20,9 @@ if args['token'] is not None:
     TOKEN = args['token']
 else:
     print("Please set TOKEN parameter")
-    raise SystemError
+    TOKEN = os.getenv('TOKEN')
+    if TOKEN is None:
+        raise SystemError("TOKEN environment variable not set")
 
 bot = telebot.TeleBot(TOKEN, parse_mode=None)
 
