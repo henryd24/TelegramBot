@@ -10,7 +10,7 @@ dependencies = [
     "pytelegrambotapi==4.30.0",
     "requests>=2.33.0",
     "tabulate==0.8.10",
-    "lxml==5.2.2",
+    "lxml>=6.1.0",
     "urllib3>=2.6.0",
     "fonttools>=4.60.2",
 ]
