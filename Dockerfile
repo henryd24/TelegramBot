@@ -27,8 +27,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 RUN mkdir -p /tmp/matplotlib_cache && chmod 777 /tmp/matplotlib_cache
-COPY --from=builder /app/.venv /app/.venv
-COPY main.py .
-COPY ./src ./src
+COPY --from=builder --chown=10001:10001 /app/.venv /app/.venv
+COPY --chown=10001:10001 main.py .
+COPY --chown=10001:10001 ./src ./src
+RUN chown -R 10001:10001 /app
 USER 10001
 ENTRYPOINT ["python", "main.py"]
