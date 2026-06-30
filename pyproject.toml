@@ -12,7 +12,7 @@ dependencies = [
     "lxml>=6.1.0",
     "urllib3>=2.6.0",
     "fonttools>=4.60.2",
-    "scrapling[fetchers]>=0.4.7",
+    "scrapling[fetchers]>=0.4.9",
 ]
 [tool.uv]
 constraint-dependencies = ["pillow>=12.2.0", "urllib3>=2.7.0", "idna>=3.15"]
