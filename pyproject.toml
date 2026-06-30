@@ -1,6 +1,6 @@
 [project]
 name = "telegrambot"
-requires-python = ">=3.13"
+requires-python = ">=3.12"
 version = "0.0.1"
 dependencies = [
     "matplotlib==3.10.8",
