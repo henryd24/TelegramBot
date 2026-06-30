@@ -15,7 +15,7 @@ dependencies = [
     "scrapling[fetchers]>=0.4.7",
 ]
 [tool.uv]
-constraint-dependencies = ["pillow>=12.2.0", "urllib3>=2.7.0", "idna>=3.15"]
+constraint-dependencies = ["pillow>=12.2.0", "urllib3>=2.7.0", "idna>=3.15", "patchright>=1.61.1"]
 required-environments = [
   "sys_platform == 'linux' and platform_machine == 'x86_64'"
 ]
