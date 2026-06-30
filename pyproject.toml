@@ -17,5 +17,5 @@ dependencies = [
 [tool.uv]
 constraint-dependencies = ["pillow>=12.2.0", "urllib3>=2.7.0", "idna>=3.15"]
 required-environments = [
-  "sys_platform == 'linux' and platform_machine == 'aarch64'"
+  "sys_platform == 'linux' and platform_machine == 'x86_64'"
 ]

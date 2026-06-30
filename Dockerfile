@@ -1,24 +1,30 @@
-FROM astral/uv:python3.11-alpine AS builder
-RUN apk add --no-cache \
+FROM astral/uv:python3.13-trixie-slim AS builder
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     gcc \
     g++ \
-    musl-dev \
-    linux-headers \
-    freetype-dev \
+    libfreetype6-dev \
     libpng-dev \
-    openblas-dev
+    libopenblas-dev \
+    python3-dev \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-install-project --no-dev
 
-FROM python:3.13-alpine
+FROM python:3.13-slim
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     TZ=America/Bogota \
     MPLBACKEND=Agg \
     MPLCONFIGDIR=/tmp/matplotlib_cache \
     PATH="/app/.venv/bin:$PATH"
-RUN apk add --no-cache libstdc++ freetype libpng openblas
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libstdc++6 \
+    libfreetype6 \
+    libpng16-16 \
+    libopenblas-base \
+ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 RUN mkdir -p /tmp/matplotlib_cache && chmod 777 /tmp/matplotlib_cache
 COPY --from=builder /app/.venv /app/.venv
