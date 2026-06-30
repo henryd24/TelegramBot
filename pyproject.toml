@@ -1,9 +1,8 @@
 [project]
 name = "telegrambot"
-requires-python = ">=3.11,<3.12"
+requires-python = ">=3.14"
 version = "0.0.1"
 dependencies = [
-    "beautifulsoup4==4.11.2",
     "matplotlib==3.10.8",
     "numpy==1.26.4",
     "pandas==2.2.2",
@@ -13,6 +12,7 @@ dependencies = [
     "lxml>=6.1.0",
     "urllib3>=2.6.0",
     "fonttools>=4.60.2",
+    "scrapling[fetchers]>=0.4.7",
 ]
 [tool.uv]
 constraint-dependencies = ["pillow>=12.2.0", "urllib3>=2.7.0", "idna>=3.15"]
