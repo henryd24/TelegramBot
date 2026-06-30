@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libstdc++6 \
     libfreetype6 \
     libpng16-16 \
-    libopenblas-base \
+    libopenblas0 \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 RUN mkdir -p /tmp/matplotlib_cache && chmod 777 /tmp/matplotlib_cache
