@@ -21,16 +21,14 @@ spec:
           image: henda24/telegrambot:1873
           resources:
             requests:
-              cpu: "250m"
-              memory: "256Mi"
+              cpu: "100m"
+              memory: "128Mi"
             limits:
-              cpu: "1"
-              memory: "1Gi"
+              cpu: "500m"
+              memory: "384Mi"
           env:
-            - name: MPLCONFIGDIR
-              value: "/tmp/matplotlib_cache"
-            - name: MPLBACKEND
-              value: "Agg"
+            - name: TZ
+              value: "America/Bogota"
           envFrom:
             - secretRef:
                 name: telegrambot
@@ -42,3 +40,4 @@ spec:
         - name: tz-config
           hostPath:
             path: /etc/localtime
+

@@ -1,12 +1,28 @@
-# Ignoring specific files
+# Ignore local environments, secrets, notebooks, and build artifacts
+.venv/
+.git/
+.github/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.DS_Store
+
+# Ignore local config and secrets
+.env
+.env*
+.envrc
+
+# Ignore docs, notebooks, CI/CD and k8s manifests
 README.md
+pruebas.ipynb
+*.ipynb
 docker-compose.yaml
 azure-pipeline.yaml
 .gitignore
 Makefile
+requirements.txt
 requeriments.txt
 k8s/
-
-src/__pycache__/
 Dockerfile
-.git/
+

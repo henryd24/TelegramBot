@@ -1,27 +1,23 @@
 [project]
 name = "telegrambot"
 requires-python = ">=3.12"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
-    "matplotlib==3.10.8",
-    "numpy==1.26.4",
-    "pandas==2.2.3",
     "pytelegrambotapi==4.30.0",
     "requests>=2.33.0",
-    "tabulate==0.8.10",
     "lxml>=6.1.0",
     "urllib3>=2.7.0",
-    "fonttools>=4.60.2",
     "scrapling[fetchers]>=0.4.9",
 ]
+
 [tool.uv]
 constraint-dependencies = [
     "anyio>=4.14.2",
     "idna>=3.15",
-    "pillow>=12.3.0",
     "protego>=0.6.2",
     "urllib3>=2.7.0",
 ]
 required-environments = [
-  "sys_platform == 'linux' and platform_machine == 'x86_64'"
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'linux' and platform_machine == 'aarch64'",
 ]
