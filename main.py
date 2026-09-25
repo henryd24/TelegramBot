@@ -5,10 +5,25 @@ import telebot
 from telebot.apihelper import ApiTelegramException
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from src.alerts import (
+    build_alerts_message,
+    cancel_match_alert,
+    schedule_match_alert,
+    start_alert_worker,
+)
 from src.logger import setup_logging
-from src.money import google_trm
+from src.money import (
+    build_trm_view,
+    convert_currency_message,
+)
 from src.nrandom import most_common_number
-from src.tables import build_matches_message, xbox_games_view
+from src.tables import (
+    build_matches_message,
+    build_standings_message,
+    find_game_by_id,
+    search_matches_message,
+    xbox_games_view,
+)
 
 parser = argparse.ArgumentParser(description="Telegram Bot for Caguan Group")
 parser.add_argument("-t", "--token", help="Token to connect in telegram", required=False)
@@ -27,22 +42,38 @@ else:
 
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
+LEAGUE_ALIASES = {
+    "betplay": "col.1",
+    "colombia": "col.1",
+    "dimayor": "col.1",
+    "premier": "eng.1",
+    "inglaterra": "eng.1",
+    "laliga": "esp.1",
+    "españa": "esp.1",
+    "espana": "esp.1",
+    "seriea": "ita.1",
+    "italia": "ita.1",
+    "bundesliga": "ger.1",
+    "alemania": "ger.1",
+    "ligue1": "fra.1",
+    "francia": "fra.1",
+    "champions": "uefa.champions",
+    "libertadores": "conmebol.libertadores",
+    "sudamericana": "conmebol.sudamericana",
+    "argentina": "arg.1",
+    "brasil": "bra.1",
+}
+
 
 def _build_welcome_markup() -> InlineKeyboardMarkup:
     markup = InlineKeyboardMarkup(row_width=2)
     markup.add(
         InlineKeyboardButton("⚽ Partidos de Hoy", callback_data="nav|matches|0"),
         InlineKeyboardButton("📆 Partidos Mañana", callback_data="nav|matches|1"),
-        InlineKeyboardButton("💵 Consultar TRM", callback_data="nav|trm"),
-        InlineKeyboardButton("🎮 Lanzamientos Xbox", callback_data="nav|upgames"),
-    )
-    return markup
-
-
-def _build_trm_markup() -> InlineKeyboardMarkup:
-    markup = InlineKeyboardMarkup()
-    markup.add(
-        InlineKeyboardButton("🔄 Actualizar TRM / Dólar", callback_data="trm|refresh")
+        InlineKeyboardButton("📊 Tabla Posiciones", callback_data="nav|standings"),
+        InlineKeyboardButton("🔔 Mis Alertas", callback_data="nav|alerts"),
+        InlineKeyboardButton("💵 Dólar / Euro / BTC", callback_data="nav|trm"),
+        InlineKeyboardButton("🟢 Xbox & Game Pass", callback_data="nav|gamepass"),
     )
     return markup
 
@@ -69,55 +100,105 @@ def _safe_edit_message(
         raise
 
 
+def _user_display_name(user) -> str:
+    if not user:
+        return "Usuario"
+    if getattr(user, "username", None):
+        return f"@{user.username}"
+    first = getattr(user, "first_name", "") or ""
+    last = getattr(user, "last_name", "") or ""
+    return f"{first} {last}".strip() or "Usuario"
+
+
 # =================================== Telegram Handlers ================================================
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message) -> None:
     welcome_text = (
         "👋 <b>¡Qué se dice, Caguaneros!</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "Bienvenido al bot del grupo. Aquí tienes los comandos disponibles:\n\n"
-        "⚽ <b>Fútbol en Vivo y TV (Colombia)</b>\n"
-        "├ /matches — Agenda interactiva de partidos de <b>hoy</b>\n"
-        "└ /tmatches — Agenda interactiva de partidos de <b>mañana</b>\n\n"
-        "💵 <b>Economía y Divisas</b>\n"
-        "└ /trm — TRM oficial y dólar spot en tiempo real\n\n"
-        "🎮 <b>Videojuegos</b>\n"
-        "└ /upgames — Próximos lanzamientos de <b>Xbox Series X|S</b>\n\n"
+        "Aquí tienes todos los comandos y herramientas del bot:\n\n"
+        "⚽ <b>Fútbol en Vivo, TV y Posiciones</b>\n"
+        "├ /matches — Agenda interactiva de <b>hoy</b>\n"
+        "├ /tmatches — Agenda interactiva de <b>mañana</b>\n"
+        "├ <code>/matches millonarios</code> — Buscar equipo o torneo\n"
+        "├ /tabla — Tabla de posiciones (BetPlay, Premier, Champions…)\n"
+        "└ /alertas — Recordatorios 10 min antes del partido 🔔\n\n"
+        "💵 <b>Divisas, Conversor y Cripto</b>\n"
+        "├ /trm — Dólar TRM, Mercado, Euro y Cripto\n"
+        "├ <code>/trm 150</code> — Convertir USD/COP/EUR/BTC\n"
+        "└ /euro │ /crypto — Acceso directo a Euro y Bitcoin\n\n"
+        "🎮 <b>Gaming Xbox Series X|S</b>\n"
+        "├ /upgames — Próximos lanzamientos de Xbox\n"
+        "└ /gamepass — Juegos recién agregados a <b>Game Pass CO</b>\n\n"
         "🎲 <b>Utilidades</b>\n"
-        "└ <code>/random 1 100</code> — Número aleatorio más frecuente\n"
+        "└ <code>/random 1 100</code> — Sorteo aleatorio estadístico\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
-        "👇 <i>También puedes usar los accesos rápidos de abajo:</i>"
+        "👇 <i>Usa los botones rápidos para abrir cualquier sección:</i>"
     )
     bot.reply_to(message, welcome_text, reply_markup=_build_welcome_markup())
 
 
-@bot.message_handler(commands=["trm"])
+@bot.message_handler(commands=["trm", "euro", "crypto"])
 def trm(message) -> None:
     try:
+        parts = (message.text or "").split()
+        cmd = parts[0].lower() if parts else "/trm"
+        cmd_args = parts[1:]
+
+        if "euro" in cmd and not cmd_args:
+            text, markup = build_trm_view(tab="eur")
+            bot.reply_to(message, text, reply_markup=markup)
+            return
+
+        if "crypto" in cmd and not cmd_args:
+            text, markup = build_trm_view(tab="crypto")
+            bot.reply_to(message, text, reply_markup=markup)
+            return
+
+        if cmd_args:
+            logger.info("Convirtiendo divisas: %s", cmd_args)
+            try:
+                text, markup = convert_currency_message(cmd_args)
+                bot.reply_to(message, text, reply_markup=markup)
+                return
+            except Exception:
+                bot.reply_to(
+                    message,
+                    "⚠️ <b>Formato de conversión no válido.</b>\n"
+                    "Ejemplos:\n"
+                    "• <code>/trm 150</code> (150 USD a COP)\n"
+                    "• <code>/trm 500000 cop</code> (COP a USD/EUR)\n"
+                    "• <code>/trm 100 eur</code> (EUR a COP)\n"
+                    "• <code>/trm 0.05 btc</code> (BTC a USD/COP)",
+                )
+                return
+
         logger.info("Consultando TRM / USD-COP")
-        msg = google_trm()
-        bot.reply_to(message, msg, reply_markup=_build_trm_markup())
+        text, markup = build_trm_view(tab="usd")
+        bot.reply_to(message, text, reply_markup=markup)
         logger.info("TRM enviada con éxito")
     except Exception:
         bot.reply_to(
             message,
-            "⚠️ <b>No se pudo consultar la TRM en este momento.</b>\n"
+            "⚠️ <b>No se pudo consultar la información cambiaria en este momento.</b>\n"
             "<i>Inténtalo nuevamente en unos segundos.</i>",
         )
         logger.error("Error obteniendo TRM", exc_info=True)
 
 
-@bot.message_handler(commands=["upgames"])
+@bot.message_handler(commands=["upgames", "gamepass"])
 def upcoming_releases(message) -> None:
     try:
-        logger.info("Consultando próximos lanzamientos de Xbox")
-        text, markup = xbox_games_view(page=0)
+        cmd = ((message.text or "").split()[0] or "").lower()
+        mode = "gamepass" if "gamepass" in cmd else "releases"
+        logger.info("Consultando sección Xbox (mode=%s)", mode)
+        text, markup = xbox_games_view(page=0, mode=mode)
         bot.reply_to(message, text, reply_markup=markup)
-        logger.info("Lanzamientos de Xbox enviados")
+        logger.info("Sección Xbox enviada")
     except Exception:
         bot.reply_to(
             message,
-            "⚠️ <b>No se pudo cargar la lista de juegos de Xbox.</b>\n"
+            "⚠️ <b>No se pudo cargar la información de Xbox.</b>\n"
             "<i>Inténtalo de nuevo más tarde.</i>",
         )
         logger.error("Error obteniendo juegos de Xbox", exc_info=True)
@@ -126,7 +207,16 @@ def upcoming_releases(message) -> None:
 @bot.message_handler(commands=["matches", "tmatches"])
 def sending_matches(message) -> None:
     try:
-        cmd_text = (message.text or "").split()[0].lower()
+        parts = (message.text or "").split(maxsplit=1)
+        cmd_text = parts[0].lower() if parts else "/matches"
+        query = parts[1].strip() if len(parts) > 1 else ""
+
+        if query:
+            logger.info("Buscando partidos por criterio: %r", query)
+            text, markup = search_matches_message(query)
+            bot.reply_to(message, text, reply_markup=markup)
+            return
+
         position = 1 if "tmatches" in cmd_text else 0
         logger.info("Consultando partidos (position=%s)", position)
 
@@ -145,6 +235,40 @@ def sending_matches(message) -> None:
             "<i>Por favor intenta de nuevo en unos segundos.</i>",
         )
         logger.error("Error enviando partidos", exc_info=True)
+
+
+@bot.message_handler(commands=["tabla", "posiciones"])
+def standings_handler(message) -> None:
+    try:
+        parts = (message.text or "").split(maxsplit=1)
+        arg = parts[1].strip().lower() if len(parts) > 1 else ""
+        league_code = LEAGUE_ALIASES.get(arg, "col.1")
+        logger.info("Consultando tabla de posiciones (%s)", league_code)
+        text, markup = build_standings_message(league_code=league_code, page=0)
+        bot.reply_to(message, text, reply_markup=markup)
+    except Exception:
+        bot.reply_to(
+            message,
+            "⚠️ <b>No se pudo obtener la tabla de posiciones.</b>",
+        )
+        logger.error("Error en /tabla", exc_info=True)
+
+
+@bot.message_handler(commands=["alertas", "alerta"])
+def alerts_handler(message) -> None:
+    try:
+        parts = (message.text or "").split(maxsplit=1)
+        if len(parts) > 1 and parts[1].strip():
+            # Si escribe /alerta <equipo>, buscar el partido para que toque la campana
+            text, markup = search_matches_message(parts[1].strip())
+            bot.reply_to(message, text, reply_markup=markup)
+            return
+
+        text, markup = build_alerts_message(message.chat.id)
+        bot.reply_to(message, text, reply_markup=markup)
+    except Exception:
+        bot.reply_to(message, "⚠️ <b>No se pudieron cargar las alertas.</b>")
+        logger.error("Error en /alertas", exc_info=True)
 
 
 def _format_random_response(
@@ -247,32 +371,119 @@ def handle_callbacks(call) -> None:
                 bot.answer_callback_query(call.id)
             return
 
-        # 2. Botones de Xbox: x|{page}|{refresh}
+        # 2. Botones de Tabla de Posiciones: st|{league_code}|{page}|{action}
+        if data.startswith("st|"):
+            if data == "st|noop":
+                bot.answer_callback_query(call.id, "📄 Página actual")
+                return
+
+            parts = data.split("|")
+            lcode = parts[1] if len(parts) > 1 else "col.1"
+            page = int(parts[2]) if len(parts) > 2 else 0
+            action = parts[3] if len(parts) > 3 else "0"
+            picker = action == "pick"
+            force_refresh = action == "1"
+
+            text, markup = build_standings_message(
+                league_code=lcode,
+                page=page,
+                picker=picker,
+                force_refresh=force_refresh,
+            )
+            _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
+            bot.answer_callback_query(
+                call.id,
+                "✅ Tabla actualizada" if force_refresh else None,
+            )
+            return
+
+        # 3. Botones de Recordatorios / Alertas: al|{action}|...
+        if data.startswith("al|"):
+            parts = data.split("|")
+            action = parts[1] if len(parts) > 1 else "list"
+
+            if action == "set" and len(parts) >= 4:
+                pos = int(parts[2])
+                game_id = parts[3]
+                game = find_game_by_id(pos, game_id)
+                if not game:
+                    bot.answer_callback_query(
+                        call.id,
+                        "⚠️ No se encontró el partido seleccionado.",
+                        show_alert=True,
+                    )
+                    return
+
+                user_lbl = _user_display_name(call.from_user)
+                created, toast_msg = schedule_match_alert(chat_id, game, user_label=user_lbl)
+                bot.answer_callback_query(call.id, toast_msg, show_alert=not created)
+                text, markup = build_alerts_message(chat_id)
+                _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
+                return
+
+            if action == "del" and len(parts) >= 3:
+                game_id = parts[2]
+                removed = cancel_match_alert(chat_id, game_id)
+                bot.answer_callback_query(
+                    call.id,
+                    "🗑️ Recordatorio eliminado" if removed else "Ya no estaba activo",
+                )
+                text, markup = build_alerts_message(chat_id)
+                _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
+                return
+
+            text, markup = build_alerts_message(chat_id)
+            _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
+            bot.answer_callback_query(call.id)
+            return
+
+        # 4. Botones de Xbox & Game Pass: x|{mode}|{page}|{refresh}
         if data.startswith("x|"):
             if data == "x|noop":
                 bot.answer_callback_query(call.id, "📄 Página actual")
                 return
 
             parts = data.split("|")
-            page = int(parts[1]) if len(parts) > 1 else 0
-            force_refresh = (parts[2] == "1") if len(parts) > 2 else False
+            if len(parts) == 3:
+                mode = "releases"
+                page = int(parts[1])
+                force_refresh = parts[2] == "1"
+            else:
+                mode = parts[1] if len(parts) > 1 else "releases"
+                page = int(parts[2]) if len(parts) > 2 else 0
+                force_refresh = (parts[3] == "1") if len(parts) > 3 else False
 
-            text, markup = xbox_games_view(page=page, force_refresh=force_refresh)
+            text, markup = xbox_games_view(
+                page=page,
+                force_refresh=force_refresh,
+                mode=mode,
+            )
             _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
             bot.answer_callback_query(
                 call.id,
-                "✅ Lista de Xbox actualizada" if force_refresh else None,
+                "✅ Catálogo Xbox actualizado" if force_refresh else None,
             )
             return
 
-        # 3. Botón de actualizar TRM
-        if data == "trm|refresh":
-            msg = google_trm(force_refresh=True)
-            _safe_edit_message(chat_id, message_id, msg, reply_markup=_build_trm_markup())
-            bot.answer_callback_query(call.id, "✅ TRM actualizada")
+        # 5. Botones de TRM / Euro / Cripto: trm|tab|{tab}|{refresh}
+        if data.startswith("trm|"):
+            parts = data.split("|")
+            if len(parts) >= 3 and parts[1] == "tab":
+                tab = parts[2]
+                force_refresh = (parts[3] == "1") if len(parts) > 3 else False
+            else:
+                tab = "usd"
+                force_refresh = True
+
+            text, markup = build_trm_view(tab=tab, force_refresh=force_refresh)
+            _safe_edit_message(chat_id, message_id, text, reply_markup=markup)
+            bot.answer_callback_query(
+                call.id,
+                "✅ Cotización actualizada" if force_refresh else None,
+            )
             return
 
-        # 4. Botón de volver a lanzar /random: rnd|{low}|{high}|{reps}
+        # 6. Botón de volver a lanzar /random: rnd|{low}|{high}|{reps}
         if data.startswith("rnd|"):
             parts = data.split("|")
             low = int(parts[1])
@@ -283,7 +494,7 @@ def handle_callbacks(call) -> None:
             bot.answer_callback_query(call.id, "🎲 ¡Nuevo lanzamiento!")
             return
 
-        # 5. Botones de acceso rápido desde /start o /help
+        # 7. Botones de acceso rápido desde /start o /help
         if data.startswith("nav|"):
             parts = data.split("|")
             target = parts[1] if len(parts) > 1 else ""
@@ -292,10 +503,18 @@ def handle_callbacks(call) -> None:
                 pos = int(parts[2]) if len(parts) > 2 else 0
                 text, markup = build_matches_message(position=pos, mode="auto")
                 bot.send_message(chat_id, text, reply_markup=markup)
+            elif target == "standings":
+                text, markup = build_standings_message(league_code="col.1", page=0)
+                bot.send_message(chat_id, text, reply_markup=markup)
+            elif target == "alerts":
+                text, markup = build_alerts_message(chat_id)
+                bot.send_message(chat_id, text, reply_markup=markup)
             elif target == "trm":
-                bot.send_message(chat_id, google_trm(), reply_markup=_build_trm_markup())
-            elif target == "upgames":
-                text, markup = xbox_games_view(page=0)
+                text, markup = build_trm_view(tab="usd")
+                bot.send_message(chat_id, text, reply_markup=markup)
+            elif target in ("upgames", "gamepass"):
+                mode = "gamepass" if target == "gamepass" else "releases"
+                text, markup = xbox_games_view(page=0, mode=mode)
                 bot.send_message(chat_id, text, reply_markup=markup)
             return
 
@@ -316,6 +535,7 @@ def main() -> None:
     try:
         logger.info("Iniciando Bot")
         logger.info("--------------------------------")
+        start_alert_worker(bot)
         bot.infinity_polling(skip_pending=True)
     except Exception:
         logger.error("Excepción crítica en el bot", exc_info=True)
