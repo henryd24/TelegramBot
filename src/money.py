@@ -3,12 +3,13 @@ from datetime import datetime, timedelta, timezone
 import html
 from threading import Lock
 import time
+# pyrefly: ignore [missing-import]
+from lxml import html as lxml_html
 import requests
 # pyrefly: ignore [missing-import]
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .logger import setup_logging
-from .tables import get_shared_fetcher
 
 DOLARAPI_TRM_URL = "https://co.dolarapi.com/v1/trm"
 DOLARAPI_USD_URL = "https://co.dolarapi.com/v1/cotizaciones/usd"
@@ -144,11 +145,18 @@ def _fallback_google_or_er() -> str:
     except Exception as e:
         logger.warning("Fallback ExchangeRate-API falló: %s", e)
 
-    fetcher = get_shared_fetcher(adaptive=False)
-    page = fetcher.get(GOOGLE_FINANCE_URL)
-    stock_name = html.escape(node_text(page.css(".JV7gl")) or "USD / COP")
-    current_price = html.escape(node_text(page.css(".Pdsbrc")) or "N/D")
-    previous_closing = html.escape(node_text(page.css(".u77W5d")) or "N/D")
+    resp = _http_session.get(GOOGLE_FINANCE_URL, timeout=6)
+    resp.raise_for_status()
+    doc = lxml_html.fromstring(resp.content.decode("utf-8", errors="replace"))
+    stock_name = html.escape(
+        node_text(doc.xpath("//*[contains(@class, 'JV7gl')]/text()")) or "USD / COP"
+    )
+    current_price = html.escape(
+        node_text(doc.xpath("//*[contains(@class, 'Pdsbrc')]/text()")) or "N/D"
+    )
+    previous_closing = html.escape(
+        node_text(doc.xpath("//*[contains(@class, 'u77W5d')]/text()")) or "N/D"
+    )
 
     return (
         f"💵 <b>TASA DE CAMBIO ({stock_name})</b> 🇨🇴\n"

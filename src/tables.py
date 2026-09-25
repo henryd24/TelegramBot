@@ -11,8 +11,6 @@ import unicodedata
 from lxml import html as lxml_html
 import requests
 # pyrefly: ignore [missing-import]
-from scrapling.fetchers import Fetcher
-# pyrefly: ignore [missing-import]
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .logger import setup_logging
@@ -21,11 +19,7 @@ logger = setup_logging(__name__)
 
 COLOMBIA_TZ = timezone(timedelta(hours=-5))
 
-# Shared Fetcher instances keyed by configuration to avoid mutating config across callers
-_shared_fetchers: dict[tuple, Fetcher] = {}
-_fetcher_lock = Lock()
-
-# HTTP session for JSON APIs
+# HTTP session for JSON APIs and HTML tables
 _api_session = requests.Session()
 _api_session.headers.update({
     "User-Agent": (
@@ -140,24 +134,6 @@ MONTHS_ES = {
 }
 
 
-def get_shared_fetcher(adaptive: bool = True, **configure_kwargs) -> Fetcher:
-    """Return a cached Fetcher instance keyed by configuration (thread-safe)."""
-    key = (bool(adaptive), tuple(sorted(configure_kwargs.items())))
-    with _fetcher_lock:
-        if key not in _shared_fetchers:
-            f = Fetcher()
-            try:
-                cfg = dict(adaptive=adaptive, **configure_kwargs)
-                f.configure(**cfg)
-            except Exception:
-                try:
-                    f.configure(adaptive=adaptive)
-                except Exception:
-                    pass
-            _shared_fetchers[key] = f
-        return _shared_fetchers[key]
-
-
 def _format_spanish_date(dt: datetime) -> str:
     day_name = DAYS_ES.get(dt.weekday(), "")
     month_name = MONTHS_ES.get(dt.month, "")
@@ -204,42 +180,15 @@ def _fetch_xbox_items(force_refresh: bool = False) -> list[dict[str, str]]:
             return cached["items"]  # type: ignore[return-value]
 
     gamesurl = "https://vandal.elespanol.com/lanzamientos/97/xbox-series-x"
-    items: list[dict[str, str]] = []
     try:
-        fetcher = get_shared_fetcher(adaptive=False)
-        page = fetcher.get(gamesurl)
-        if hasattr(page, "text") and page.text:
-            html_text = page.text
-        elif hasattr(page, "content"):
-            content = page.content
-            html_text = (
-                content.decode("utf-8", errors="replace")
-                if isinstance(content, (bytes, bytearray))
-                else str(content)
-            )
-        elif hasattr(page, "extract"):
-            extracted = page.extract()
-            html_text = (
-                extracted[0]
-                if isinstance(extracted, (list, tuple)) and extracted
-                else str(extracted)
-            )
-        else:
-            html_text = str(page)
-        items = _parse_xbox_html_tables(html_text)
-    except Exception:
-        pass
-
-    if not items:
-        try:
-            resp = _api_session.get(gamesurl, timeout=10)
-            resp.raise_for_status()
-            items = _parse_xbox_html_tables(
-                resp.content.decode("utf-8", errors="replace")
-            )
-        except Exception as e:
-            logger.error("Error reading xbox games tables: %s", e)
-            return []
+        resp = _api_session.get(gamesurl, timeout=10)
+        resp.raise_for_status()
+        items = _parse_xbox_html_tables(
+            resp.content.decode("utf-8", errors="replace")
+        )
+    except Exception as e:
+        logger.error("Error reading xbox games tables: %s", e)
+        return []
 
     with _xbox_lock:
         _xbox_cache["releases"] = {"items": items, "timestamp": now}
@@ -975,40 +924,54 @@ def _parse_lapelotona_time(time_str: str, base_date: datetime) -> datetime | Non
 def _fetch_lapelotona_matches(position: int, target_date: datetime) -> list[dict]:
     """
     Extrae los partidos televisados en Colombia desde La Pelotona usando sus selectores
-    semánticos (.hc-partido-row) y el fallback de tablas.
+    semánticos (.hc-partido-row) y el fallback de tablas con lxml.html.
     """
-    fetcher = get_shared_fetcher(adaptive=True)
-    html_doc = fetcher.get(LAPELOTONA_URL)
+    resp = _api_session.get(LAPELOTONA_URL, timeout=8)
+    resp.raise_for_status()
+    doc = lxml_html.fromstring(resp.content.decode("utf-8", errors="replace"))
 
-    table_id = "#partidos-hoy" if position == 0 else "#partidos-manana"
-    rows_nodes = html_doc.css(f"{table_id} tr.hc-partido-row")
+    table_id = "partidos-hoy" if position == 0 else "partidos-manana"
+    rows_nodes = doc.xpath(
+        f"//*[@id='{table_id}']//tr[contains(@class, 'hc-partido-row')]"
+    )
 
     if not rows_nodes:
-        tables = html_doc.css(".partidos-tabla")
+        tables = doc.xpath("//*[contains(@class, 'partidos-tabla')]")
         target_idx = 0 if position == 0 else 1
         if len(tables) > target_idx:
-            rows_nodes = tables[target_idx].css("tr.hc-partido-row")
+            rows_nodes = tables[target_idx].xpath(
+                ".//tr[contains(@class, 'hc-partido-row')]"
+            )
 
     now_col = datetime.now(COLOMBIA_TZ)
     results: list[dict] = []
 
-    def _txt(nodes) -> str:
-        if not nodes:
+    def _xtxt(elem, xpath_expr: str) -> str:
+        found = elem.xpath(xpath_expr)
+        if not found:
             return ""
-        n = nodes[0]
-        if hasattr(n, "text") and n.text:
-            return str(n.text).strip()
-        raw = n.extract() if hasattr(n, "extract") else str(n)
-        if isinstance(raw, list):
-            raw = raw[0] if raw else ""
-        return re.sub(r"<[^>]+>", "", str(raw)).strip()
+        text = re.sub(r"\s+", " ", "".join(found[0].itertext())).strip()
+        return re.sub(
+            r"^(canales?|hora|torneo|liga|partido)\s*:\s*",
+            "",
+            text,
+            flags=re.IGNORECASE,
+        ).strip()
 
     for idx, row in enumerate(rows_nodes):
-        home = _txt(row.css(".hc-team-local a")) or _txt(row.css(".hc-team-local"))
-        away = _txt(row.css(".hc-team-visitante a")) or _txt(row.css(".hc-team-visitante"))
-        hora_raw = _txt(row.css(".hc-time"))
-        liga = _txt(row.css(".hc-liga a")) or _txt(row.css(".hc-liga")) or "Fútbol"
-        canales_raw = _txt(row.css(".hc-canal"))
+        home = _xtxt(row, ".//*[contains(@class, 'hc-team-local')]//a") or _xtxt(
+            row, ".//*[contains(@class, 'hc-team-local')]"
+        )
+        away = _xtxt(row, ".//*[contains(@class, 'hc-team-visitante')]//a") or _xtxt(
+            row, ".//*[contains(@class, 'hc-team-visitante')]"
+        )
+        hora_raw = _xtxt(row, ".//*[contains(@class, 'hc-time')]")
+        liga = (
+            _xtxt(row, ".//*[contains(@class, 'hc-liga')]//a")
+            or _xtxt(row, ".//*[contains(@class, 'hc-liga')]")
+            or "Fútbol"
+        )
+        canales_raw = _xtxt(row, ".//*[contains(@class, 'hc-canal')]")
 
         if not home or not away or not hora_raw:
             continue

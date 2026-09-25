@@ -1,7 +1,7 @@
 # ==============================================================================
-# Stage 1: Builder (instala dependencias con uv sin paquetes de compilación C++)
+# Stage 1: Builder en Alpine (wheels musllinux precompilados, sin gcc)
 # ==============================================================================
-FROM astral/uv:python3.12-trixie-slim AS builder
+FROM astral/uv:python3.12-alpine AS builder
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
@@ -10,13 +10,13 @@ ENV UV_COMPILE_BYTECODE=1 \
 WORKDIR /app
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --no-install-project --no-dev && \
+RUN uv sync --frozen --no-install-project --no-dev && \
     find /app/.venv -type d \( -name "tests" -o -name "test" \) -exec rm -rf {} + 2>/dev/null || true
 
 # ==============================================================================
-# Stage 2: Runtime ligero (sin matplotlib/openblas ni capas duplicadas por chown)
+# Stage 2: Runtime ultra-ligero sobre Alpine (~65-75 MB total)
 # ==============================================================================
-FROM python:3.12-slim-trixie
+FROM python:3.12-alpine
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
