@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegrambot-redis
+  labels:
+    app: telegrambot-redis
+spec:
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  clusterIP: None
+  selector:
+    app: telegrambot-redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: telegrambot-redis
+  labels:
+    app: telegrambot-redis
+spec:
+  serviceName: telegrambot-redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegrambot-redis
+  template:
+    metadata:
+      labels:
+        app: telegrambot-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - "--appendonly"
+            - "yes"
+            - "--save"
+            - "60"
+            - "1"
+          ports:
+            - containerPort: 6379
+              name: redis
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

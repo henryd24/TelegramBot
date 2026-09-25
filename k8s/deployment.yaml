@@ -29,6 +29,11 @@ spec:
           env:
             - name: TZ
               value: "America/Bogota"
+            # Si REDIS_URL tiene valor, usa el StatefulSet externo de Redis.
+            # Si se deja vacío ("") o se elimina, el bot levanta automáticamente
+            # una DB SQLite local en memoria mientras el pod viva.
+            - name: REDIS_URL
+              value: "redis://telegrambot-redis:6379/0"
           envFrom:
             - secretRef:
                 name: telegrambot

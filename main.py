@@ -27,6 +27,12 @@ from src.tables import (
 
 parser = argparse.ArgumentParser(description="Telegram Bot for Caguan Group")
 parser.add_argument("-t", "--token", help="Token to connect in telegram", required=False)
+parser.add_argument(
+    "-r",
+    "--redis-url",
+    help="External Redis URL for alerts persistence (falls back to local DB if omitted)",
+    required=False,
+)
 args = vars(parser.parse_args())
 
 logger = setup_logging("TelegramBot")
@@ -39,6 +45,8 @@ else:
     if TOKEN is None:
         print("Please set TOKEN parameter or TOKEN environment variable")
         raise SystemError("TOKEN environment variable not set")
+
+REDIS_URL = (args.get("redis_url") or os.getenv("REDIS_URL") or "").strip() or None
 
 bot = telebot.TeleBot(TOKEN, parse_mode="HTML")
 
@@ -535,7 +543,7 @@ def main() -> None:
     try:
         logger.info("Iniciando Bot")
         logger.info("--------------------------------")
-        start_alert_worker(bot)
+        start_alert_worker(bot, redis_url=REDIS_URL)
         bot.infinity_polling(skip_pending=True)
     except Exception:
         logger.error("Excepción crítica en el bot", exc_info=True)
