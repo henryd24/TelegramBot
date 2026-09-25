@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 import html
 from threading import Lock, Thread
 import time
+# pyrefly: ignore [missing-import]
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .logger import setup_logging

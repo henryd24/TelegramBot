@@ -7,9 +7,12 @@ import textwrap
 import time
 import unicodedata
 
+# pyrefly: ignore [missing-import]
 from lxml import html as lxml_html
 import requests
+# pyrefly: ignore [missing-import]
 from scrapling.fetchers import Fetcher
+# pyrefly: ignore [missing-import]
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .logger import setup_logging

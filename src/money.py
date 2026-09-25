@@ -1,10 +1,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import html
-import re
 from threading import Lock
 import time
 import requests
+# pyrefly: ignore [missing-import]
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 from .logger import setup_logging
